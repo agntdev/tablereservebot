@@ -22,5 +22,9 @@ export function buildBot(token: string) {
     await ctx.reply("Welcome! I am ready to help.");
   });
 
+  bot.on("message:text", async (ctx) => {
+    await ctx.reply("Use /start to get started.");
+  });
+
   return bot;
 }
