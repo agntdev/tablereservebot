@@ -20,6 +20,19 @@ function timesOverlap(
   const aE = timeToMinutes(aEnd);
   const bS = timeToMinutes(bStart);
   const bE = timeToMinutes(bEnd);
+
+  const aCrossesMidnight = aE <= aS;
+  const bCrossesMidnight = bE <= bS;
+
+  if (aCrossesMidnight && bCrossesMidnight) {
+    return true;
+  }
+  if (aCrossesMidnight) {
+    return bE > aS || bS < aE;
+  }
+  if (bCrossesMidnight) {
+    return aE > bS || aS < bE;
+  }
   return aS < bE && aE > bS;
 }
 
