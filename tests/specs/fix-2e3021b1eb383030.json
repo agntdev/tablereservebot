@@ -1,0 +1,46 @@
+[
+  {
+    "name": "/slots with configured settings shows available slots (exercises generateSlots)",
+    "steps": [
+      {
+        "send": { "text": "/slots" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book 2025-06-15 19:00 4 confirms booking (allocateFirstFit single-table success)",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 4" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book 2025-06-15 19:00 6 confirms booking (allocateFirstFit multi-table allocation)",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 6" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book 2025-06-15 19:00 30 fails with not enough seats (allocateFirstFit capacity failure)",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 30" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 30\nAvailable seats: 28" } }
+        ]
+      }
+    ]
+  }
+]

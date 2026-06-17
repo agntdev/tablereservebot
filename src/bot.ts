@@ -23,20 +23,26 @@ function mainMenu(): InlineKeyboardMarkup {
  * it. Shared by the runtime entry (src/index.ts) and the Tests-gate harness
  * (src/harness-entry.ts) so both exercise the exact same bot. Add new commands
  * and flows here.
+ *
+ * Pass `opts.storage` to inject persistent storage for testing.
+ * Pass `opts.now` (ISO string) to fix the current time in handlers
+ * for deterministic dialog tests.
  */
-export function buildBot(token: string) {
+export function buildBot(token: string, opts?: { storage?: Storage; now?: string }) {
   const bot = createBot<Session>(token, {
     initial: () => ({}),
   });
 
-  let storage: Storage | null = null;
-  if (process.env.REDIS_URL) {
+  let storage: Storage | null = opts?.storage ?? null;
+  if (!storage && process.env.REDIS_URL) {
     try {
       storage = defaultRedisStorageFactory(process.env.REDIS_URL);
     } catch {
       storage = null;
     }
   }
+
+  const testNow = opts?.now;
 
   bot.command("start", async (ctx) => {
     await ctx.reply(
@@ -146,7 +152,7 @@ export function buildBot(token: string) {
     const guestName = nameParts.length > 0 ? nameParts.join(" ") : null;
     const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const now = new Date().toISOString();
+    const now = (testNow ?? new Date().toISOString());
 
     await storage.createBooking({
       id: bookingId,
@@ -202,7 +208,7 @@ export function buildBot(token: string) {
       );
       return;
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = (testNow ?? new Date().toISOString()).slice(0, 10);
     const lines = slots.map((s) => `${s.start}–${s.end}`);
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
