@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/today reports storage not configured when no storage is available",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Storage is not configured. Please set REDIS_URL." } }
+        ]
+      }
+    ]
+  }
+]

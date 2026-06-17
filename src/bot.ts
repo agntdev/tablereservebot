@@ -1,4 +1,5 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import { Storage } from "./storage/index.js";
 
 // The per-chat session shape (ephemeral conversation state only). Extend as the
 // bot grows. Durable domain data must NOT live here — use the toolkit's
@@ -21,7 +22,7 @@ function mainMenu(): InlineKeyboardMarkup {
  * (src/harness-entry.ts) so both exercise the exact same bot. Add new commands
  * and flows here.
  */
-export function buildBot(token: string) {
+export function buildBot(token: string, storage?: Storage) {
   const bot = createBot<Session>(token, {
     initial: () => ({}),
   });
@@ -31,6 +32,55 @@ export function buildBot(token: string) {
       "Welcome! I am the AGNTDEV bot — your assistant for Telegram bot development.\n\nUse the menu below to get started:",
       { reply_markup: mainMenu() },
     );
+  });
+
+  bot.command("today", async (ctx) => {
+    if (!storage) {
+      await ctx.reply("Storage is not configured. Please set REDIS_URL.");
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    const timezone = settings?.timezone ?? "UTC";
+
+    const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+
+    const bookings = await storage.listBookingsByDate(todayStr);
+    const tableTypes = await storage.listTableTypes();
+
+    let totalSeats = 0;
+    for (const tt of tableTypes) {
+      totalSeats += tt.seat_count * tt.quantity;
+    }
+
+    let bookedSeats = 0;
+    for (const b of bookings) {
+      if (b.status !== "cancelled" && b.status !== "no_show") {
+        bookedSeats += b.party_size;
+      }
+    }
+
+    const remaining = Math.max(0, totalSeats - bookedSeats);
+
+    let message = `\u{1F4C5} *Today — ${todayStr}*\n\n`;
+    message += `\u{1FA91} *Capacity:* ${remaining} of ${totalSeats} seats remaining\n\n`;
+
+    if (bookings.length === 0) {
+      message += "No bookings for today.";
+    } else {
+      message += `\u{1F4CB} *Bookings (${bookings.length})*\n\n`;
+      const active = bookings.filter((b) => b.status === "confirmed" || b.status === "rescheduled");
+      const nonActive = bookings.filter((b) => b.status === "cancelled" || b.status === "no_show");
+      for (const b of active) {
+        message += `\u2705 ${b.start_time}\\-${b.end_time} — ${b.guest_name ?? "Guest"} \\(${b.party_size}p\\)\n`;
+      }
+      for (const b of nonActive) {
+        const icon = b.status === "cancelled" ? "\u274C" : "\u{1F47B}";
+        message += `${icon} ~~${b.start_time}\\-${b.end_time} — ${b.guest_name ?? "Guest"} \\(${b.party_size}p\\)~~\n`;
+      }
+    }
+
+    await ctx.reply(message, { parse_mode: "MarkdownV2" });
   });
 
   bot.callbackQuery("menu:about", async (ctx) => {
