@@ -253,6 +253,15 @@ export class Storage {
   }
 
   async updateBooking(id: string, updates: Partial<Booking>): Promise<void> {
+    const oldBooking = await this.getBooking(id);
+    if (!oldBooking) return;
+
+    const dateChanged = updates.date !== undefined && updates.date !== oldBooking.date;
+
+    if (dateChanged) {
+      await this.redis.srem(KEY.bookingsByDate(oldBooking.date), id);
+    }
+
     const args: string[] = [];
     if (updates.guest_name !== undefined) args.push("guest_name", updates.guest_name ?? "");
     if (updates.guest_phone !== undefined) args.push("guest_phone", updates.guest_phone ?? "");
@@ -266,6 +275,10 @@ export class Storage {
     if (updates.updated_at !== undefined) args.push("updated_at", updates.updated_at);
     if (args.length > 0) {
       await this.redis.hset(KEY.booking(id), ...args);
+    }
+
+    if (dateChanged) {
+      await this.redis.sadd(KEY.bookingsByDate(updates.date!), id);
     }
   }
 
