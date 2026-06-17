@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/help lists available commands",
+    "steps": [
+      {
+        "send": { "text": "/help" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Available commands:\n/start — Start the bot\n/help — Show this help message" } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "unknown /command replies with a friendly fallback",
+    "steps": [
+      {
+        "send": { "text": "/foo" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "I don't know that command. Send /help to see what I can do." } }
+        ]
+      }
+    ]
+  }
+]

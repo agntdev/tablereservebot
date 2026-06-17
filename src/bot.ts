@@ -59,8 +59,32 @@ export function buildBot(token: string) {
     );
   });
 
+  bot.command("help", async (ctx) => {
+    await ctx.reply(
+      "Available commands:\n/start — Start the bot\n/help — Show this help message",
+    );
+  });
+
+  bot.on("message:text").filter(
+    (ctx) => !!ctx.msg.entities?.some((e) => e.type === "bot_command"),
+    async (ctx) => {
+      await ctx.reply(
+        "I don't know that command. Send /help to see what I can do.",
+      );
+    },
+  );
+
   bot.on("message:text", async (ctx) => {
     await ctx.reply("Use /start to get started.");
+  });
+
+  bot.catch(async (err) => {
+    console.error("[bot] unhandled error:", err.error);
+    try {
+      await err.ctx.reply("Something went wrong. Please try again later.");
+    } catch (_) {
+      // best effort
+    }
   });
 
   return bot;
