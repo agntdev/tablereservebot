@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { allocateFirstFit, type AllocationResult } from "../allocate.js";
 import type {
   AllocationDetail,
   Booking,
@@ -24,7 +25,7 @@ const KEY = {
 
 export interface StorageRedis {
   get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<"OK" | null>;
+  set(key: string, value: string, ...args: (string | number)[]): Promise<"OK" | null>;
   del(...keys: string[]): Promise<number>;
   keys(pattern: string): Promise<string[]>;
   hget(key: string, field: string): Promise<string | null>;
@@ -299,6 +300,51 @@ export class Storage {
       "table_types", JSON.stringify(allocation.table_types),
       "created_at", allocation.created_at,
     );
+  }
+
+  /**
+   * Atomically check availability and create a booking for a time slot.
+   * Uses a Redis SET-NX lock on the date+time window to prevent concurrent
+   * double-bookings: if two guests try to book overlapping time slots
+   * simultaneously, only one acquires the lock and completes.
+   */
+  async createBookingAtomic(
+    booking: Booking,
+    date: string,
+    startTime: string,
+    endTime: string,
+    partySize: number,
+  ): Promise<AllocationResult> {
+    const lockKey = `lock:book:${date}:${startTime}:${endTime}`;
+
+    const acquired = await this.redis.set(lockKey, "1", "EX", 10, "NX");
+    if (!acquired) {
+      return {
+        success: false,
+        reason: "This time slot is currently being booked by another guest. Please try again in a moment.",
+        available_seats: 0,
+        needed_seats: partySize,
+      };
+    }
+
+    try {
+      const result = await allocateFirstFit(this, date, startTime, endTime, partySize);
+      if (!result.success) {
+        return result;
+      }
+
+      booking.allocated_tables = result.tables;
+      await this.createBooking(booking);
+      await this.saveAllocation({
+        booking_id: booking.id,
+        table_types: result.tables,
+        created_at: booking.created_at,
+      });
+
+      return result;
+    } finally {
+      await this.redis.del(lockKey);
+    }
   }
 
   async getAllocation(bookingId: string): Promise<AllocationDetail | null> {

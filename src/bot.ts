@@ -1,7 +1,7 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
+import type { Booking } from "./storage/types.js";
 import { generateSlots } from "./slots.js";
-import { allocateFirstFit } from "./allocate.js";
 
 // The per-chat session shape (ephemeral conversation state only). Extend as the
 // bot grows. Durable domain data must NOT live here — use the toolkit's
@@ -126,7 +126,29 @@ export function buildBot(token: string) {
       ":" +
       String(endMinutes).padStart(2, "0");
 
-    const result = await allocateFirstFit(storage, date, time, endTime, partySize);
+    const guestName = nameParts.length > 0 ? nameParts.join(" ") : null;
+    const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const now = new Date().toISOString();
+
+    const booking: Booking = {
+      id: bookingId,
+      ref_code: refCode,
+      guest_telegram_id: ctx.from?.id ?? 0,
+      guest_name: guestName ?? ctx.from?.first_name ?? null,
+      guest_phone: null,
+      date,
+      start_time: time,
+      end_time: endTime,
+      duration: settings.sitting_length,
+      party_size: partySize,
+      allocated_tables: [],
+      status: "confirmed",
+      created_at: now,
+      updated_at: now,
+    };
+
+    const result = await storage.createBookingAtomic(booking, date, time, endTime, partySize);
     if (!result.success) {
       await ctx.reply(
         `Cannot book: ${result.reason}\n` +
@@ -141,34 +163,6 @@ export function buildBot(token: string) {
       const tt = tableTypes.find((t) => t.id === a.table_type_id);
       const label = tt ? tt.label : a.table_type_id;
       return `${a.count}× ${label}`;
-    });
-
-    const guestName = nameParts.length > 0 ? nameParts.join(" ") : null;
-    const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const now = new Date().toISOString();
-
-    await storage.createBooking({
-      id: bookingId,
-      ref_code: refCode,
-      guest_telegram_id: ctx.from?.id ?? 0,
-      guest_name: guestName ?? ctx.from?.first_name ?? null,
-      guest_phone: null,
-      date,
-      start_time: time,
-      end_time: endTime,
-      duration: settings.sitting_length,
-      party_size: partySize,
-      allocated_tables: result.tables,
-      status: "confirmed",
-      created_at: now,
-      updated_at: now,
-    });
-
-    await storage.saveAllocation({
-      booking_id: bookingId,
-      table_types: result.tables,
-      created_at: now,
     });
 
     await ctx.reply(
