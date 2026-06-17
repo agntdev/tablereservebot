@@ -265,10 +265,8 @@ export class Storage {
     if (updates.party_size !== undefined) args.push("party_size", String(updates.party_size));
     if (updates.allocated_tables !== undefined) args.push("allocated_tables", JSON.stringify(updates.allocated_tables));
     if (updates.status !== undefined) args.push("status", updates.status);
-    if (updates.updated_at !== undefined) args.push("updated_at", updates.updated_at);
-    if (args.length > 0) {
-      await this.redis.hset(KEY.booking(id), ...args);
-    }
+    args.push("updated_at", new Date().toISOString());
+    await this.redis.hset(KEY.booking(id), ...args);
   }
 
   async updateBookingStatus(id: string, status: BookingStatus): Promise<void> {
