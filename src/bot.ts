@@ -1,4 +1,6 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
+import { generateSlots } from "./slots.js";
 
 // The per-chat session shape (ephemeral conversation state only). Extend as the
 // bot grows. Durable domain data must NOT live here — use the toolkit's
@@ -25,6 +27,15 @@ export function buildBot(token: string) {
   const bot = createBot<Session>(token, {
     initial: () => ({}),
   });
+
+  let storage: Storage | null = null;
+  if (process.env.REDIS_URL) {
+    try {
+      storage = defaultRedisStorageFactory(process.env.REDIS_URL);
+    } catch {
+      storage = null;
+    }
+  }
 
   bot.command("start", async (ctx) => {
     await ctx.reply(
@@ -62,6 +73,34 @@ export function buildBot(token: string) {
   bot.command("help", async (ctx) => {
     await ctx.reply(
       "Available commands:\n/start — Start the bot\n/help — Show this help message",
+    );
+  });
+
+  bot.command("slots", async (ctx) => {
+    if (!storage) {
+      await ctx.reply(
+        "Slot generation is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.",
+      );
+      return;
+    }
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+    const slots = generateSlots(settings);
+    if (slots.length === 0) {
+      await ctx.reply(
+        "No available slots within the configured opening hours. Check the venue settings.",
+      );
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const lines = slots.map((s) => `${s.start}–${s.end}`);
+    await ctx.reply(
+      `Available slots for ${today}:\n\n${lines.join("\n")}`,
     );
   });
 
