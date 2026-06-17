@@ -1,4 +1,5 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import { isAdmin } from "./admin.js";
 
 // The per-chat session shape (ephemeral conversation state only). Extend as the
 // bot grows. Durable domain data must NOT live here — use the toolkit's
@@ -63,6 +64,14 @@ export function buildBot(token: string) {
     await ctx.reply(
       "Available commands:\n/start — Start the bot\n/help — Show this help message",
     );
+  });
+
+  bot.command("admin", async (ctx) => {
+    if (!isAdmin(ctx.from?.id)) {
+      await ctx.reply("⛔ You are not authorized to use this command.");
+      return;
+    }
+    await ctx.reply("🛡️ Admin panel — you have owner access.");
   });
 
   bot.on("message:text").filter(

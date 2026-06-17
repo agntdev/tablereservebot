@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/admin grants access to admin users",
+    "steps": [
+      {
+        "send": { "text": "/admin" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "🛡️ Admin panel — you have owner access." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/admin denies non-admin users",
+    "steps": [
+      {
+        "send": { "text": "/admin", "userId": 999 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "⛔ You are not authorized to use this command." } }
+        ]
+      }
+    ]
+  }
+]
