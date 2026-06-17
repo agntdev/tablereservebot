@@ -253,6 +253,8 @@ export class Storage {
   }
 
   async updateBooking(id: string, updates: Partial<Booking>): Promise<void> {
+    const b = await this.getBooking(id);
+    if (!b) return;
     const args: string[] = [];
     if (updates.guest_name !== undefined) args.push("guest_name", updates.guest_name ?? "");
     if (updates.guest_phone !== undefined) args.push("guest_phone", updates.guest_phone ?? "");
