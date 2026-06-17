@@ -1,0 +1,90 @@
+[
+  {
+    "name": "/book reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Booking is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with no arguments shows usage",
+    "steps": [
+      {
+        "send": { "text": "/book" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Usage: /book <date> <time> <party_size> [guest_name]\n\nExample: /book 2025-06-15 19:00 4 John" } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with too few arguments shows usage",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Usage: /book <date> <time> <party_size> [guest_name]\n\nExample: /book 2025-06-15 19:00 4 John" } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with invalid date format shows error",
+    "steps": [
+      {
+        "send": { "text": "/book 15-06-2025 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid date format. Use YYYY-MM-DD (e.g. 2025-06-15)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with invalid time format shows error",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 7pm 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid time format. Use HH:MM (e.g. 19:00)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with non-numeric party size shows error",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 abc" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Party size must be a positive number (e.g. 4)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with zero party size shows error",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 0" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Party size must be a positive number (e.g. 4)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with negative party size shows error",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 19:00 -1" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Party size must be a positive number (e.g. 4)." } }
+        ]
+      }
+    ]
+  }
+]
