@@ -1,0 +1,56 @@
+[
+  {
+    "name": "past year date pick is rejected with proper message",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2020-01-01" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Date **2020-01-01** is in the past. Please select today or a future date."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "past date in same month is rejected with proper message",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-01" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Date **2026-06-01** is in the past. Please select today or a future date."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
