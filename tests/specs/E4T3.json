@@ -43,8 +43,8 @@
               "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
@@ -134,8 +134,8 @@
               "text": "✅ Booking **REF-TESTOWN** has been cancelled.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
@@ -168,8 +168,8 @@
               "text": "Booking cancellation was not applied.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
