@@ -1,0 +1,204 @@
+[
+  {
+    "name": "date pick prompts for party size with quick buttons",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-15**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "2", "callback_data": "party:2" },
+                    { "text": "4", "callback_data": "party:4" }
+                  ],
+                  [
+                    { "text": "6", "callback_data": "party:6" },
+                    { "text": "8", "callback_data": "party:8" }
+                  ],
+                  [
+                    { "text": "Type a number", "callback_data": "party:type" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "party quick button confirms guest count",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-20" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-20**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:4" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\nGuests: 4"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "typed party size is accepted after type-a-number prompt",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-18" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-18**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-18\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1–99):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "5" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-18\nGuests: 5"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "invalid typed party size is rejected",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-22" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-22**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-22\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1–99):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "abc" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a whole number between 1 and 99."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

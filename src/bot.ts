@@ -1,5 +1,11 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
 import { buildCalendar } from "./calendar.js";
+import {
+  buildPartySizeKeyboard,
+  formatPartySizeConfirmation,
+  formatPartySizePrompt,
+  parsePartySizeInput,
+} from "./party.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
 import { generateSlots } from "./slots.js";
@@ -7,6 +13,9 @@ import { generateSlots } from "./slots.js";
 export interface Session {
   calYear?: number;
   calMonth?: number;
+  selectedDate?: string;
+  partySize?: number;
+  awaitingPartySize?: boolean;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -99,7 +108,44 @@ export function buildBot(token: string) {
   bot.callbackQuery(/^cal:pick:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const dateStr = ctx.match[1];
+    ctx.session.selectedDate = dateStr;
+    ctx.session.partySize = undefined;
+    ctx.session.awaitingPartySize = true;
     await ctx.editMessageText(`✅ You selected **${dateStr}**.`);
+    await ctx.reply(formatPartySizePrompt(dateStr), {
+      reply_markup: buildPartySizeKeyboard(),
+    });
+  });
+
+  bot.callbackQuery(/^party:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const dateStr = ctx.session.selectedDate;
+    if (!dateStr) {
+      await ctx.editMessageText("Please pick a date first with /calendar.");
+      return;
+    }
+
+    const partySize = Number.parseInt(ctx.match[1], 10);
+    if (!Number.isFinite(partySize) || partySize < 1 || partySize > 99) {
+      await ctx.answerCallbackQuery({ text: "Invalid party size." });
+      return;
+    }
+
+    ctx.session.partySize = partySize;
+    ctx.session.awaitingPartySize = false;
+    await ctx.editMessageText(formatPartySizeConfirmation(dateStr, partySize));
+  });
+
+  bot.callbackQuery("party:type", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const dateStr = ctx.session.selectedDate;
+    if (!dateStr) {
+      await ctx.editMessageText("Please pick a date first with /calendar.");
+      return;
+    }
+
+    ctx.session.awaitingPartySize = true;
+    await ctx.editMessageText("Type the number of guests (1–99):");
   });
 
   bot.callbackQuery("cal:ignore", async (ctx) => {
@@ -242,6 +288,26 @@ export function buildBot(token: string) {
   );
 
   bot.on("message:text", async (ctx) => {
+    if (ctx.session.awaitingPartySize) {
+      const dateStr = ctx.session.selectedDate;
+      if (!dateStr) {
+        ctx.session.awaitingPartySize = false;
+        await ctx.reply("Please pick a date first with /calendar.");
+        return;
+      }
+
+      const partySize = parsePartySizeInput(ctx.msg.text);
+      if (partySize === null) {
+        await ctx.reply("Please enter a whole number between 1 and 99.");
+        return;
+      }
+
+      ctx.session.partySize = partySize;
+      ctx.session.awaitingPartySize = false;
+      await ctx.reply(formatPartySizeConfirmation(dateStr, partySize));
+      return;
+    }
+
     await ctx.reply("Use /start to get started.");
   });
 
