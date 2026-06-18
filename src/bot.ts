@@ -45,8 +45,8 @@ export interface Session {
 
 function mainMenu(): InlineKeyboardMarkup {
   return inlineKeyboard([
-    [inlineButton("📋 About", "menu:about")],
-    [inlineButton("🛟 Help", "menu:help")],
+    [inlineButton("📋 How to Reserve", "menu:about")],
+    [inlineButton("🛟 Need Assistance?", "menu:help")],
     [inlineButton("⚙️ Settings", "menu:settings")],
   ]);
 }
