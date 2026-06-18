@@ -1,0 +1,68 @@
+[
+  {
+    "name": "successful reschedule: booking found, released, slots shown, new slot picked, confirmation emitted",
+    "steps": [
+      {
+        "send": { "text": "/reschedule REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Booking REF-TESTOWN has been released.\n\nShowing available time slots for **2026-06-20** (2 guests):"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\nGuests: 2\n\n47 time slots available. Pick a time:",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "09:00–10:30", "callback_data": "slot:pick:09:00" }],
+                  [{ "text": "09:15–10:45", "callback_data": "slot:pick:09:15" }],
+                  [{ "text": "09:30–11:00", "callback_data": "slot:pick:09:30" }],
+                  [{ "text": "09:45–11:15", "callback_data": "slot:pick:09:45" }],
+                  [{ "text": "10:00–11:30", "callback_data": "slot:pick:10:00" }],
+                  [{ "text": "10:15–11:45", "callback_data": "slot:pick:10:15" }],
+                  [{ "text": "Next »", "callback_data": "slot:page:1" }]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/reschedule reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/reschedule REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
