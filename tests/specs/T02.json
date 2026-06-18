@@ -8,11 +8,11 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Welcome! I am the AGNTDEV bot — your assistant for Telegram bot development.\n\nUse the menu below to get started:",
+              "text": "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the buttons below to reserve, get help, or configure restaurant settings (for owners only).\n\nUse the menu below to get started:\n\n⚙️ Settings is for restaurant owners to configure opening hours, table inventory, and venue settings — visible only to admin accounts.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
@@ -34,8 +34,8 @@
               "text": "I am the AGNTDEV bot, built with the grammY framework and the AGNTDEV bot toolkit. I help you build, test, and deploy Telegram bots.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
@@ -57,8 +57,8 @@
               "text": "Available commands:\n/start — Show the main menu\n\nUse the menu buttons below to navigate.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
@@ -80,8 +80,8 @@
               "text": "Settings are managed through the bot's environment and persistent storage. Use the menu below to navigate.",
               "reply_markup": {
                 "inline_keyboard": [
-                  [{ "text": "📋 About", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
                   [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
                 ]
               }
