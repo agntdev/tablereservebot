@@ -1,0 +1,87 @@
+[
+  {
+    "name": "/cancel shows confirmation dialog with Yes/No buttons",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Are you sure you want to cancel the current operation?",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "✅ Yes", "callback_data": "cancel:yes" },
+                    { "text": "❌ No", "callback_data": "cancel:no" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "clicking No dismisses the cancel confirmation",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Are you sure you want to cancel the current operation?"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cancel:no" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Operation continues."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "clicking Yes cancels and shows main menu",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Are you sure you want to cancel the current operation?"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cancel:yes" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Cancelled. Use /start to start over.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

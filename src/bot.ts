@@ -1,4 +1,5 @@
 import {
+  confirmKeyboard,
   createBot,
   type BotContext,
   InlineKeyboardMarkup,
@@ -45,6 +46,24 @@ function mainMenu(): InlineKeyboardMarkup {
     [inlineButton("🛟 Help", "menu:help")],
     [inlineButton("⚙️ Settings", "menu:settings")],
   ]);
+}
+
+function clearOperationSession(session: Session): void {
+  session.calYear = undefined;
+  session.calMonth = undefined;
+  session.selectedDate = undefined;
+  session.partySize = undefined;
+  session.awaitingPartySize = undefined;
+  session.availableSlots = undefined;
+  session.slotPage = undefined;
+  session.selectedSlot = undefined;
+  session.collectingBookingGuestName = undefined;
+  session.collectingBookingGuestPhone = undefined;
+  session.bookingDate = undefined;
+  session.bookingTime = undefined;
+  session.bookingPartySize = undefined;
+  session.bookingGuestName = undefined;
+  session.bookingGuestPhone = undefined;
 }
 
 /**
@@ -229,7 +248,7 @@ export function buildBot(token: string) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/cancel — Cancel the current operation",
     );
   });
 
@@ -501,11 +520,30 @@ export function buildBot(token: string) {
     );
   });
 
+  bot.command("cancel", async (ctx) => {
+    await ctx.reply("Are you sure you want to cancel the current operation?", {
+      reply_markup: confirmKeyboard("cancel"),
+    });
+  });
+
   bot.callbackQuery("guest:skip_phone", async (ctx) => {
     await ctx.answerCallbackQuery();
     ctx.session.bookingGuestPhone = null;
     ctx.session.collectingBookingGuestPhone = false;
     await finalizeBooking(ctx);
+  });
+
+  bot.callbackQuery("cancel:yes", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    clearOperationSession(ctx.session);
+    await ctx.editMessageText("Cancelled. Use /start to start over.", {
+      reply_markup: mainMenu(),
+    });
+  });
+
+  bot.callbackQuery("cancel:no", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText("Operation continues.");
   });
 
   bot.on("message:text").filter(
