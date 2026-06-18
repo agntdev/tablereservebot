@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/book with party size exceeding total venue capacity shows exact seat counts",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-25 20:00 30 Eve" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 30\nAvailable seats: 26" } }
+        ]
+      }
+    ]
+  }
+]
