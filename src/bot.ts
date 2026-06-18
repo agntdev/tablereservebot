@@ -289,6 +289,8 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
 
+    await storage.updateBookingStatus(original.id, "rescheduled");
+
     const tableTypes = await storage.listTableTypes();
     const lines = result.tables.map((a) => {
       const tt = tableTypes.find((t) => t.id === a.table_type_id);
@@ -659,8 +661,6 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       );
       return;
     }
-
-    await storage.updateBookingStatus(booking.id, "rescheduled");
 
     ctx.session.rescheduleBookingId = booking.id;
     ctx.session.rescheduleRefCode = refCode;
