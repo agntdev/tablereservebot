@@ -9,6 +9,33 @@ export interface ReminderResult {
   checked: number;
 }
 
+function getTimezoneOffsetMs(timezone: string, date: Date): number {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      timeZoneName: "longOffset",
+      hour12: false,
+    });
+    const formatted = formatter.format(date);
+    const match = formatted.match(/GMT([+-]\d{2}):?(\d{2})/);
+    if (!match) return 0;
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const sign = hours >= 0 ? 1 : -1;
+    return (Math.abs(hours) * 3600 + minutes * 60) * 1000 * sign;
+  } catch {
+    return 0;
+  }
+}
+
+function toUtcTimestamp(dateStr: string, timeStr: string, timezone: string): number {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hour, minute] = timeStr.split(":").map(Number);
+  const naiveUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const offsetMs = getTimezoneOffsetMs(timezone, new Date(naiveUtc));
+  return naiveUtc - offsetMs;
+}
+
 export async function checkAndSendReminders(
   storage: Storage,
   api: ReminderApi,
@@ -39,15 +66,7 @@ export async function checkAndSendReminders(
       const alreadyReminded = await storage.hasReminderSent(booking.id);
       if (alreadyReminded) continue;
 
-      const [h, m] = booking.start_time.split(":").map(Number);
-      const bookingTs = Date.UTC(
-        Number(booking.date.slice(0, 4)),
-        Number(booking.date.slice(5, 7)) - 1,
-        Number(booking.date.slice(8, 10)),
-        h,
-        m,
-        0,
-      );
+      const bookingTs = toUtcTimestamp(booking.date, booking.start_time, settings.timezone);
       const timeUntilMs = bookingTs - now.getTime();
 
       if (timeUntilMs <= 0) continue;
