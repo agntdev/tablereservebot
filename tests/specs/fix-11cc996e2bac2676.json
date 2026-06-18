@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/reschedule with no arguments shows usage (storage available)",
+    "steps": [
+      {
+        "send": { "text": "/reschedule" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Usage: /reschedule <ref_code>\n\nExample: /reschedule REF-ABC123\n\nProvide your booking reference to release your current time slot and pick a new one." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/reschedule with nonexistent ref code returns not found (storage available)",
+    "steps": [
+      {
+        "send": { "text": "/reschedule N0NEXIST" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Booking with reference **N0NEXIST** was not found. Please check your reference and try again." } }
+        ]
+      }
+    ]
+  }
+]
