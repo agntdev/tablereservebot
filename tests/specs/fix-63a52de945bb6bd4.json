@@ -3,7 +3,7 @@
     "name": "booking via /book produces confirmation with View/Reschedule/Cancel inline buttons",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 14:00 2 TestGuest" },
+        "send": { "text": "/book 2026-06-25 14:00 2 TestGuest" },
         "expect": [
           {
             "method": "sendMessage",

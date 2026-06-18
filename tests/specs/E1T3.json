@@ -14,18 +14,18 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-15" },
+        "send": { "callback": "cal:pick:2026-06-20" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "✅ You selected **2026-06-15**."
+              "text": "✅ You selected **2026-06-20**."
             }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number.",
+              "text": "✅ Date: 2026-06-20\n\nHow many guests? Pick a quick option or type a number.",
               "reply_markup": {
                 "inline_keyboard": [
                   [

@@ -3,13 +3,13 @@
     "name": "/book rejects a booking when overlapping time slots consume all remaining capacity",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 18:00 15 LargeParty" },
+        "send": { "text": "/book 2026-06-25 18:00 15 LargeParty" },
         "expect": [
           { "method": "sendMessage" }
         ]
       },
       {
-        "send": { "text": "/book 2026-06-15 18:30 11 AnotherParty" },
+        "send": { "text": "/book 2026-06-25 18:30 11 AnotherParty" },
         "expect": [
           {
             "method": "sendMessage",
@@ -25,13 +25,13 @@
     "name": "/book succeeds when overlapping time slots have enough remaining capacity",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-16 18:00 10 GroupA" },
+        "send": { "text": "/book 2026-06-26 18:00 10 GroupA" },
         "expect": [
           { "method": "sendMessage" }
         ]
       },
       {
-        "send": { "text": "/book 2026-06-16 18:30 10 GroupB" },
+        "send": { "text": "/book 2026-06-26 18:30 10 GroupB" },
         "expect": [
           { "method": "sendMessage" }
         ]

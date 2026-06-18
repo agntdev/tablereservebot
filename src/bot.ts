@@ -586,13 +586,13 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     if (args.length < 3) {
       await ctx.reply(
         "Usage: /book <date> <time> <party_size> [guest_name]\n\n" +
-          "Example: /book 2025-06-15 19:00 4 John",
+          "Example: /book 2026-06-25 19:00 4 John",
       );
       return;
     }
     const [date, time, partySizeStr, ...nameParts] = args;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      await ctx.reply("Invalid date format. Use YYYY-MM-DD (e.g. 2025-06-15).");
+      await ctx.reply("Invalid date format. Use YYYY-MM-DD (e.g. 2026-06-25).");
       return;
     }
     const dateParts = date.split("-");
@@ -600,12 +600,12 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const month = Number.parseInt(dateParts[1], 10);
     const day = Number.parseInt(dateParts[2], 10);
     if (year < 2000 || month < 1 || month > 12 || day < 1) {
-      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15).");
+      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2026-06-25).");
       return;
     }
     const daysInMonth = new Date(year, month, 0).getDate();
     if (day > daysInMonth) {
-      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15).");
+      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2026-06-25).");
       return;
     }
     const nowDate = await getTzTodayStr();
