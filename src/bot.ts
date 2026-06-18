@@ -455,9 +455,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await ctx.answerCallbackQuery();
     const dateStr = ctx.match[1];
     const todayStr = await getTzTodayStr();
-    const [ty, tm] = todayStr.split("-").map(Number);
-    const [dy, dm] = dateStr.split("-").map(Number);
-    if (dy < ty || (dy === ty && dm < tm)) {
+    const [ty, tm, td] = todayStr.split("-").map(Number);
+    const [dy, dm, dd] = dateStr.split("-").map(Number);
+    if (dy < ty || (dy === ty && dm < tm) || (dy === ty && dm === tm && dd < td)) {
       await ctx.editMessageText(
         `Date **${dateStr}** is in the past. Please select today or a future date.`,
       );
@@ -608,9 +608,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
     const nowDate = await getTzTodayStr();
-    const [ny, nm] = nowDate.split("-").map(Number);
-    const [by, bm] = date.split("-").map(Number);
-    if (by < ny || (by === ny && bm < nm)) {
+    const [ny, nm, nd] = nowDate.split("-").map(Number);
+    const [by, bm, bd] = date.split("-").map(Number);
+    if (by < ny || (by === ny && bm < nm) || (by === ny && bm === nm && bd < nd)) {
       await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
       return;
     }

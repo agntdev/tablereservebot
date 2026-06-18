@@ -107,17 +107,17 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-15" },
+        "send": { "callback": "cal:pick:2026-06-25" },
         "expect": [
           { "method": "answerCallbackQuery" },
           {
             "method": "editMessageText",
-            "payload": { "text": "✅ You selected **2026-06-15**." }
+            "payload": { "text": "✅ You selected **2026-06-25**." }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+              "text": "✅ Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number."
             }
           }
         ]
