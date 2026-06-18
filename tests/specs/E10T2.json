@@ -1,6 +1,6 @@
 [
   {
-    "name": "/start replies with greeting and reservation steps",
+    "name": "/start includes tooltip explaining Settings button is for admins",
     "steps": [
       {
         "send": { "text": "/start" },
