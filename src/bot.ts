@@ -424,6 +424,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
   bot.command("help", async (ctx) => {
     await ctx.reply(
       "Available commands:\n/start — Start the bot\n/help — Show this help message\n/booking — View booking details by reference code\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation\n/mark_noshow — Mark a booking as no-show (admin only)",
+      { reply_markup: mainMenu() },
     );
   });
 
