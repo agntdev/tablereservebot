@@ -1,0 +1,206 @@
+[
+  {
+    "name": "/settings by admin shows current settings with main menu",
+    "steps": [
+      {
+        "send": { "text": "/settings", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Current Settings:\n\nOpen Time: 09:00\nClose Time: 22:00\nTimezone: UTC\nSitting Length: 90 min\nSlot Increment: 15 min\nReminder Lead Time: 120 min\n\nTo update a setting, use: /settings set <key> <value>",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings by non-admin shows access denied",
+    "steps": [
+      {
+        "send": { "text": "/settings", "userId": 999 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Access denied. You are not an admin."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set open_time updates open_time",
+    "steps": [
+      {
+        "send": { "text": "/settings set open_time 08:00", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ open_time set to 08:00.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set sitting_length updates sitting_length",
+    "steps": [
+      {
+        "send": { "text": "/settings set sitting_length 120", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ sitting_length set to 120.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set close_time validates HH:MM format",
+    "steps": [
+      {
+        "send": { "text": "/settings set close_time 25:00", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "close_time must have hours 00–23 and minutes 00–59."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set with invalid key shows error",
+    "steps": [
+      {
+        "send": { "text": "/settings set unknown_key test", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Unknown setting key: \"unknown_key\". Valid keys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set without value shows usage",
+    "steps": [
+      {
+        "send": { "text": "/settings set", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Usage: /settings set <key> <value>\n\nKeys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\nExample: /settings set open_time 09:00"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set sitting_length rejects non-integer",
+    "steps": [
+      {
+        "send": { "text": "/settings set sitting_length 1.5", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "sitting_length must be a positive integer (e.g. 90)."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set with bad subcommand shows usage",
+    "steps": [
+      {
+        "send": { "text": "/settings badcmd", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Usage: /settings — show current settings\n/settings set <key> <value> — update a setting\n\nKeys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\nExample: /settings set open_time 08:00"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set timezone updates timezone",
+    "steps": [
+      {
+        "send": { "text": "/settings set timezone Europe/London", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ timezone set to Europe/London.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/settings set by non-admin shows access denied",
+    "steps": [
+      {
+        "send": { "text": "/settings set open_time 10:00", "userId": 999 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Access denied. You are not an admin."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
