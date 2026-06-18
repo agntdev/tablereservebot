@@ -1,0 +1,18 @@
+[
+  {
+    "name": "/slots reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/slots" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Slot generation is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

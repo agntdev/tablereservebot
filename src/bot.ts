@@ -8,7 +8,8 @@ import {
 } from "./party.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
-import { generateSlots } from "./slots.js";
+import { generateSlots, type Slot } from "./slots.js";
+import { allocateFirstFit } from "./allocate.js";
 
 export interface Session {
   calYear?: number;
@@ -271,10 +272,30 @@ export function buildBot(token: string) {
       );
       return;
     }
-    const today = new Date().toISOString().slice(0, 10);
-    const lines = slots.map((s) => `${s.start}–${s.end}`);
+
+    const date = ctx.session.selectedDate ?? new Date().toISOString().slice(0, 10);
+    const partySize = ctx.session.partySize ?? 1;
+
+    const availableSlots: Slot[] = [];
+    for (const slot of slots) {
+      const result = await allocateFirstFit(storage, date, slot.start, slot.end, partySize);
+      if (result.success) {
+        availableSlots.push(slot);
+      }
+    }
+
+    if (availableSlots.length === 0) {
+      const guestWord = partySize === 1 ? "guest" : "guests";
+      await ctx.reply(
+        `No available time slots for ${date} with ${partySize} ${guestWord}.`,
+      );
+      return;
+    }
+
+    const guestWord = partySize === 1 ? "guest" : "guests";
+    const lines = availableSlots.map((s) => `${s.start}–${s.end}`);
     await ctx.reply(
-      `Available slots for ${today}:\n\n${lines.join("\n")}`,
+      `Available slots for ${date} (${partySize} ${guestWord}):\n\n${lines.join("\n")}`,
     );
   });
 
