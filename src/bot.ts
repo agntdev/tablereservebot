@@ -2,6 +2,7 @@ import {
   createBot,
   type BotContext,
   InlineKeyboardMarkup,
+  type InlineButton,
   inlineButton,
   inlineKeyboard,
   confirmKeyboard,
@@ -395,7 +396,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/booking — View booking details by reference code\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
     );
   });
 
@@ -868,6 +869,61 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await showAvailableSlots(ctx, booking.date, booking.party_size);
   });
 
+  bot.command("booking", async (ctx) => {
+    const args = ctx.msg.text.split(/\s+/).slice(1);
+    if (args.length < 1) {
+      await ctx.reply(
+        "Usage: /booking <ref_code>\n\nExample: /booking REF-ABC123",
+      );
+      return;
+    }
+    const refCode = args[0].trim().toUpperCase();
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.reply(
+        `Booking with reference **${refCode}** was not found. Please check the reference and try again.`,
+      );
+      return;
+    }
+
+    const admin = isAdmin(ctx);
+    const tableTypes = await storage.listTableTypes();
+
+    let msg = `📋 Booking Details\n\n`;
+    msg += `Ref: ${booking.ref_code}\n`;
+    msg += `Guest: ${booking.guest_name ?? "N/A"}\n`;
+    if (booking.guest_phone) msg += `Phone: ${booking.guest_phone}\n`;
+    msg += `Date: ${booking.date}\n`;
+    msg += `Time: ${booking.start_time}–${booking.end_time}\n`;
+    msg += `Party: ${booking.party_size}\n`;
+    msg += `Status: ${booking.status}\n`;
+
+    if (booking.allocated_tables.length > 0) {
+      const lines = booking.allocated_tables.map((a) => {
+        const tt = tableTypes.find((t) => t.id === a.table_type_id);
+        const label = tt ? tt.label : a.table_type_id;
+        return `${a.count}× ${label}`;
+      });
+      msg += `Tables: ${lines.join(", ")}\n`;
+    }
+
+    if (admin && booking.status === "confirmed") {
+      const buttons: InlineButton[][] = [
+        [inlineButton("❌ Cancel Booking", `booking:cancel:${refCode}`)],
+        [inlineButton("🚫 Mark No-Show", `booking:noshow:${refCode}`)],
+      ];
+      await ctx.reply(msg, { reply_markup: inlineKeyboard(buttons) });
+    } else {
+      await ctx.reply(msg, { reply_markup: mainMenu() });
+    }
+  });
+
   const admin = bot.filter((ctx) => isAdmin(ctx));
 
   admin.command("admin", async (ctx) => {
@@ -879,6 +935,79 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("admin", async (ctx) => {
     await ctx.reply("Access denied. You are not an admin.");
+  });
+
+  admin.callbackQuery(/^booking:cancel:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const refCode = ctx.match[1];
+    await ctx.editMessageText(
+      `Are you sure you want to cancel booking **${refCode}**? This action cannot be undone.`,
+      { reply_markup: confirmKeyboard(`booking:cancel_confirm:${refCode}`) },
+    );
+  });
+
+  admin.callbackQuery(/^booking:cancel_confirm:(.+):(yes|no)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const [, refCode, action] = ctx.match;
+    if (action === "no") {
+      await ctx.editMessageText("Booking cancellation was not applied.", {
+        reply_markup: mainMenu(),
+      });
+      return;
+    }
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.editMessageText("Booking not found.");
+      return;
+    }
+
+    await storage.updateBookingStatus(booking.id, "cancelled");
+    await ctx.editMessageText(`✅ Booking **${refCode}** has been cancelled.`, {
+      reply_markup: mainMenu(),
+    });
+  });
+
+  admin.callbackQuery(/^booking:noshow:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const refCode = ctx.match[1];
+    await ctx.editMessageText(
+      `Are you sure you want to mark booking **${refCode}** as a no-show?`,
+      { reply_markup: confirmKeyboard(`booking:noshow_confirm:${refCode}`) },
+    );
+  });
+
+  admin.callbackQuery(/^booking:noshow_confirm:(.+):(yes|no)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const [, refCode, action] = ctx.match;
+    if (action === "no") {
+      await ctx.editMessageText("No-show mark was not applied.", {
+        reply_markup: mainMenu(),
+      });
+      return;
+    }
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.editMessageText("Booking not found.");
+      return;
+    }
+
+    await storage.updateBookingStatus(booking.id, "no_show");
+    await ctx.editMessageText(
+      `✅ Booking **${refCode}** has been marked as a no-show.`,
+      { reply_markup: mainMenu() },
+    );
   });
 
   bot.callbackQuery("guest:skip_phone", async (ctx) => {
