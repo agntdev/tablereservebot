@@ -295,7 +295,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       start_time: newStartTime,
       end_time: endTime,
       duration: settings.sitting_length,
-      party_size: original.party_size,
+      party_size: ctx.session.partySize ?? original.party_size,
       allocated_tables: [],
       status: "confirmed",
       created_at: now,
@@ -307,7 +307,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       selectedDate,
       newStartTime,
       endTime,
-      original.party_size,
+      ctx.session.partySize ?? original.party_size,
     );
     if (!result.success) {
       await ctx.reply(
@@ -339,7 +339,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
         (original.guest_phone ? `Phone: ${original.guest_phone}\n` : "") +
         `Date: ${selectedDate}\n` +
         `Time: ${newStartTime}–${endTime}\n` +
-        `Party: ${original.party_size}\n` +
+        `Party: ${ctx.session.partySize ?? original.party_size}\n` +
         `Tables: ${lines.join(", ")}\n\n` +
         `Original booking ${rescheduleRefCode ?? rescheduleBookingId} has been released.`,
       { reply_markup: mainMenu() },
