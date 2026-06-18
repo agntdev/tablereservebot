@@ -259,6 +259,10 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const now = new Date().toISOString();
 
+    const savedAllocatedTables = original.allocated_tables;
+    const savedStatus = original.status;
+    await storage.updateBooking(original.id, { status: "rescheduled", allocated_tables: [] });
+
     const booking: Booking = {
       id: bookingId,
       ref_code: refCode,
@@ -284,6 +288,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       original.party_size,
     );
     if (!result.success) {
+      await storage.updateBooking(original.id, { status: savedStatus, allocated_tables: savedAllocatedTables });
       await ctx.reply(
         `Cannot reschedule: ${result.reason}\n` +
           `Needed seats: ${result.needed_seats}\n` +
@@ -296,8 +301,6 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       ctx.session.availableSlots = undefined;
       return;
     }
-
-    await storage.updateBooking(original.id, { status: "rescheduled", allocated_tables: [] });
 
     const tableTypes = await storage.listTableTypes();
     const lines = result.tables.map((a) => {
