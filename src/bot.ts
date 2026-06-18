@@ -460,7 +460,37 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     ctx.session.selectedSlot = startTime;
     await ctx.editMessageText(
       `✅ Date: ${dateStr}\nGuests: ${partySize}\nTime: ${startTime}`,
+      {
+        reply_markup: inlineKeyboard([
+          [inlineButton("📋 Book this slot", "slot:book")],
+        ]),
+      },
     );
+  });
+
+  bot.callbackQuery("slot:book", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const dateStr = ctx.session.selectedDate;
+    const partySize = ctx.session.partySize;
+    const startTime = ctx.session.selectedSlot;
+    if (!dateStr || !partySize || !startTime) {
+      await ctx.editMessageText("Please restart your reservation with /calendar.");
+      return;
+    }
+
+    ctx.session.bookingDate = dateStr;
+    ctx.session.bookingTime = startTime;
+    ctx.session.bookingPartySize = partySize;
+    ctx.session.collectingBookingGuestName = true;
+
+    ctx.session.selectedDate = undefined;
+    ctx.session.partySize = undefined;
+    ctx.session.availableSlots = undefined;
+    ctx.session.selectedSlot = undefined;
+    ctx.session.slotPage = undefined;
+    ctx.session.awaitingPartySize = undefined;
+
+    await ctx.editMessageText("Please enter the guest name for the reservation:");
   });
 
   bot.callbackQuery("cal:ignore", async (ctx) => {

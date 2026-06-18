@@ -1,0 +1,185 @@
+[
+  {
+    "name": "calendar slot selection offers book button and completes booking",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-15**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:2" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\nGuests: 2"
+            }
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\nGuests: 2\nTime: 09:00"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:book" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Please enter the guest name for the reservation:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "Alice" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a contact phone number, or skip:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "+15551234567" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "slot book with phone skip completes booking",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "party:3" },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "slot:book" },
+        "expect": [
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "text": "Bob" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "guest:skip_phone" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "slot book with empty guest name is rejected",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "party:1" },
+        "expect": [
+          { "method": "editMessageText" },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "callback": "slot:book" },
+        "expect": [
+          { "method": "editMessageText" }
+        ]
+      },
+      {
+        "send": { "text": "  " },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a valid guest name."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
