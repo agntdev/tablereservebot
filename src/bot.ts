@@ -23,13 +23,15 @@ function mainMenu(): InlineKeyboardMarkup {
  * (src/harness-entry.ts) so both exercise the exact same bot. Add new commands
  * and flows here.
  */
-export function buildBot(token: string) {
+export function buildBot(token: string, injectedStorage?: Storage | null) {
   const bot = createBot<Session>(token, {
     initial: () => ({}),
   });
 
   let storage: Storage | null = null;
-  if (process.env.REDIS_URL) {
+  if (injectedStorage !== undefined) {
+    storage = injectedStorage;
+  } else if (process.env.REDIS_URL) {
     try {
       storage = defaultRedisStorageFactory(process.env.REDIS_URL);
     } catch {
