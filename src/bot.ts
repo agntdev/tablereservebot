@@ -607,13 +607,6 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2026-06-25).");
       return;
     }
-    const nowDate = await getTzTodayStr();
-    const [ny, nm, nd] = nowDate.split("-").map(Number);
-    const [by, bm, bd] = date.split("-").map(Number);
-    if (by < ny || (by === ny && bm < nm) || (by === ny && bm === nm && bd < nd)) {
-      await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
-      return;
-    }
     if (!/^\d{2}:\d{2}$/.test(time)) {
       await ctx.reply("Invalid time format. Use HH:MM (e.g. 19:00).");
       return;
@@ -629,6 +622,14 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const partySize = Number(partySizeStr);
     if (!Number.isFinite(partySize) || partySize < 1) {
       await ctx.reply("Party size must be a positive number (e.g. 4).");
+      return;
+    }
+
+    const nowDate = await getTzTodayStr();
+    const [ny, nm, nd] = nowDate.split("-").map(Number);
+    const [by, bm, bd] = date.split("-").map(Number);
+    if (by < ny || (by === ny && bm < nm) || (by === ny && bm === nm && bd < nd)) {
+      await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
       return;
     }
 
