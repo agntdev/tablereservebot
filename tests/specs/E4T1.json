@@ -1,0 +1,34 @@
+[
+  {
+    "name": "/today reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Today's summary is unavailable \u2014 persistent storage is not configured. Set REDIS_URL to enable booking features."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/today shows no bookings when storage is configured and no bookings exist for today",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\uD83D\uDCC5 Today (2026-06-18)\n\nNo confirmed bookings yet.\n\nAll 47 time slots are available (26 seats total)."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

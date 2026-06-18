@@ -16,6 +16,7 @@ import {
 import { buildSlotKeyboard, formatSlotsPrompt } from "./slot-picker.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
+import { timesOverlap } from "./allocate.js";
 import { generateSlots, type Slot } from "./slots.js";
 
 const STORAGE_UNAVAILABLE =
@@ -353,7 +354,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/reschedule — Reschedule an existing booking",
+        "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — View today's bookings and remaining capacity\n/book — Make a reservation\n/reschedule — Reschedule an existing booking",
     );
   });
 
@@ -636,6 +637,82 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
         `Party: ${partySize}\n` +
         `Tables: ${lines.join(", ")}`,
       { reply_markup: mainMenu() },
+    );
+  });
+
+  bot.command("today", async (ctx) => {
+    if (!storage) {
+      await ctx.reply(
+        "Today's summary is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.",
+      );
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const bookings = await storage.listBookingsByDate(today);
+    const active = bookings.filter(
+      (b) => b.status === "confirmed" || b.status === "rescheduled",
+    );
+    const tableTypes = await storage.listTableTypes();
+    const totalSeats = tableTypes.reduce(
+      (s, t) => s + t.seat_count * t.quantity,
+      0,
+    );
+    const totalGuests = active.reduce((s, b) => s + b.party_size, 0);
+
+    const slots = generateSlots(settings);
+
+    let openSlots = 0;
+    for (const slot of slots) {
+      const overlapping = active.filter((b) =>
+        timesOverlap(b.start_time, b.end_time, slot.start, slot.end),
+      );
+      const allocatedByType = new Map<string, number>();
+      for (const b of overlapping) {
+        for (const alloc of b.allocated_tables) {
+          allocatedByType.set(
+            alloc.table_type_id,
+            (allocatedByType.get(alloc.table_type_id) ?? 0) + alloc.count,
+          );
+        }
+      }
+      const availSeats = tableTypes.reduce((sum, tt) => {
+        const allocated = allocatedByType.get(tt.id) ?? 0;
+        const free = Math.max(0, tt.quantity - allocated);
+        return sum + free * tt.seat_count;
+      }, 0);
+      if (availSeats > 0) openSlots++;
+    }
+
+    const header = `📅 Today (${today})\n\n`;
+
+    if (active.length === 0) {
+      await ctx.reply(
+        header +
+          `No confirmed bookings yet.\n\n` +
+          `All ${slots.length} time slots are available (${totalSeats} seats total).`,
+      );
+      return;
+    }
+
+    const bookingLines = active.map((b) => {
+      const name = b.guest_name ?? "Guest";
+      return `• ${b.start_time}–${b.end_time} — ${name} (${b.party_size}p) ${b.ref_code}`;
+    });
+
+    await ctx.reply(
+      header +
+        `${active.length} confirmed booking(s), ${totalGuests} guest(s) total:\n` +
+        `${bookingLines.join("\n")}\n\n` +
+        `${openSlots} of ${slots.length} time slots still have capacity (${totalSeats} seats total).`,
     );
   });
 
