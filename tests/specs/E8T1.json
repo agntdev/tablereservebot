@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/owner is denied to non-owners",
+    "steps": [
+      {
+        "send": { "text": "/owner", "userId": 999 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Access denied. This command is restricted to venue owners." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/owner is denied to non-owners with default user",
+    "steps": [
+      {
+        "send": { "text": "/owner" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Access denied. This command is restricted to venue owners." } }
+        ]
+      }
+    ]
+  }
+]

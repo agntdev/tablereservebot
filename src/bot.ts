@@ -1,4 +1,5 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import type { BotContext } from "./toolkit/bot.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
 import { generateSlots } from "./slots.js";
@@ -8,6 +9,17 @@ import { generateSlots } from "./slots.js";
 // persistent storage (see AGENTS.md).
 export interface Session {
   // example: step?: "awaiting_amount";
+}
+
+export async function requireOwner(
+  ctx: BotContext<Session>,
+  storage: Storage | null,
+): Promise<boolean> {
+  if (!storage) return false;
+  const userId = ctx.from?.id;
+  if (!userId) return false;
+  const owner = await storage.getOwner(userId);
+  return owner !== null;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -72,9 +84,12 @@ export function buildBot(token: string) {
   });
 
   bot.command("help", async (ctx) => {
-    await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation",
-    );
+    const isOwner = await requireOwner(ctx, storage);
+    let text = "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation";
+    if (isOwner) {
+      text += "\n/owner — Owner dashboard";
+    }
+    await ctx.reply(text);
   });
 
   bot.command("book", async (ctx) => {
@@ -201,6 +216,26 @@ export function buildBot(token: string) {
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
     );
+  });
+
+  bot.command("owner", async (ctx) => {
+    if (!(await requireOwner(ctx, storage))) {
+      await ctx.reply("Access denied. This command is restricted to venue owners.");
+      return;
+    }
+    if (!storage) {
+      await ctx.reply("Owner dashboard is unavailable — persistent storage is not configured.");
+      return;
+    }
+    const owners = await storage.listOwners();
+    if (owners.length === 0) {
+      await ctx.reply("Owner dashboard\n\nNo owners configured.");
+      return;
+    }
+    const lines = owners.map(
+      (o) => `• ${o.name} (ID: ${o.telegram_id})`,
+    );
+    await ctx.reply(`Owner dashboard\n\n${lines.join("\n")}`);
   });
 
   bot.on("message:text").filter(
