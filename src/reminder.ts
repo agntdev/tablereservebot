@@ -32,9 +32,17 @@ function getTimezoneOffsetMs(timezone: string, date: Date): number {
 function toUtcTimestamp(dateStr: string, timeStr: string, timezone: string): number {
   const [year, month, day] = dateStr.split("-").map(Number);
   const [hour, minute] = timeStr.split(":").map(Number);
-  const naiveUtc = Date.UTC(year, month - 1, day, hour, minute, 0);
-  const offsetMs = getTimezoneOffsetMs(timezone, new Date(naiveUtc));
-  return naiveUtc - offsetMs;
+  const localMinutes = hour * 60 + minute;
+
+  const midnightUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0);
+
+  const refOffsetMs = getTimezoneOffsetMs(timezone, new Date(midnightUtcMs));
+
+  const approxUtcMs = midnightUtcMs - refOffsetMs + localMinutes * 60 * 1000;
+
+  const actualOffsetMs = getTimezoneOffsetMs(timezone, new Date(approxUtcMs));
+
+  return midnightUtcMs - actualOffsetMs + localMinutes * 60 * 1000;
 }
 
 export async function checkAndSendReminders(
