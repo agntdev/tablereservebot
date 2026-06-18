@@ -20,6 +20,7 @@ import { buildSlotKeyboard, formatSlotsPrompt } from "./slot-picker.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking, Settings } from "./storage/types.js";
 import { generateSlots, type Slot } from "./slots.js";
+import { checkAndSendReminders } from "./reminder.js";
 
 const STORAGE_UNAVAILABLE =
   "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.";
@@ -1089,11 +1090,42 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     );
   });
 
+  admin.command("remind", async (ctx) => {
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const now = new Date();
+    const result = await checkAndSendReminders(storage, ctx.api, now);
+
+    if (result.checked === 0) {
+      await ctx.reply(
+        "No confirmed bookings found for today or tomorrow.",
+        { reply_markup: mainMenu() },
+      );
+    } else if (result.sent === 0) {
+      await ctx.reply(
+        `Checked ${result.checked} upcoming booking(s) — no reminders needed at this time.`,
+        { reply_markup: mainMenu() },
+      );
+    } else {
+      await ctx.reply(
+        `Sent ${result.sent} reminder(s) out of ${result.checked} upcoming booking(s).`,
+        { reply_markup: mainMenu() },
+      );
+    }
+  });
+
   bot.command("mark_noshow", async (ctx) => {
     await ctx.reply("Access denied. You are not an admin.");
   });
 
   bot.command("settings", async (ctx) => {
+    await ctx.reply("Access denied. You are not an admin.");
+  });
+
+  bot.command("remind", async (ctx) => {
     await ctx.reply("Access denied. You are not an admin.");
   });
 
@@ -1245,5 +1277,5 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
   });
 
-  return bot;
+  return { bot, storage };
 }
