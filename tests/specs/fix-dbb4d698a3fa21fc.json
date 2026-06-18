@@ -1,0 +1,113 @@
+[
+  {
+    "name": "party size selection prompts for slots and reports missing storage",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-25" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-25**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:4" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-25\nGuests: 4"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-25\nGuests: 4\n\n47 time slots available. Pick a time:"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "typed party size also prompts for slots without storage",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-18" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-18**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-18\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1–99):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "6" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-18\nGuests: 6"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-18\nGuests: 6\n\n47 time slots available. Pick a time:"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
