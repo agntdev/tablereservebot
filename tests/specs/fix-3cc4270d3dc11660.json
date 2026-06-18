@@ -1,0 +1,25 @@
+[
+  {
+    "name": "menu:settings callback replies with settings text and the menu",
+    "steps": [
+      {
+        "send": { "callback": "menu:settings" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Settings are managed through the bot's environment and persistent storage. Use the menu below to navigate.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
