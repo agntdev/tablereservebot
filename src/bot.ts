@@ -54,6 +54,14 @@ function mainMenu(): InlineKeyboardMarkup {
   ]);
 }
 
+function bookingActionsKeyboard(refCode: string): InlineKeyboardMarkup {
+  return inlineKeyboard([
+    [inlineButton("📋 View", `guest:view:${refCode}`)],
+    [inlineButton("🔄 Reschedule", `guest:reschedule:${refCode}`)],
+    [inlineButton("❌ Cancel", `guest:cancel:${refCode}`)],
+  ]);
+}
+
 /**
  * buildBot — assembles the bot and registers every handler, but does NOT start
  * it. Shared by the runtime entry (src/index.ts) and the Tests-gate harness
@@ -220,7 +228,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
         `Time: ${bookingTime}–${endTime}\n` +
         `Party: ${bookingPartySize}\n` +
         `Tables: ${lines.join(", ")}`,
-      { reply_markup: mainMenu() },
+      { reply_markup: bookingActionsKeyboard(refCode) },
     );
 
     ctx.session.bookingDate = undefined;
@@ -709,7 +717,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
         `Time: ${time}–${endTime}\n` +
         `Party: ${partySize}\n` +
         `Tables: ${lines.join(", ")}`,
-      { reply_markup: mainMenu() },
+      { reply_markup: bookingActionsKeyboard(refCode) },
     );
   });
 
@@ -1020,7 +1028,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
             "Keys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\n" +
             "Example: /settings set open_time 09:00",
           { reply_markup: mainMenu() },
-        );
+    );
         return;
       }
 
@@ -1233,6 +1241,124 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     ctx.session.bookingGuestPhone = null;
     ctx.session.collectingBookingGuestPhone = false;
     await finalizeBooking(ctx);
+  });
+
+  bot.callbackQuery(/^guest:view:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const refCode = ctx.match[1];
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.reply(
+        `Booking with reference **${refCode}** was not found. Please check the reference and try again.`,
+        { reply_markup: mainMenu() },
+      );
+      return;
+    }
+    const tableTypes = await storage.listTableTypes();
+    let msg = `📋 Booking Details\n\n`;
+    msg += `Ref: ${booking.ref_code}\n`;
+    msg += `Guest: ${booking.guest_name ?? "N/A"}\n`;
+    if (booking.guest_phone) msg += `Phone: ${booking.guest_phone}\n`;
+    msg += `Date: ${booking.date}\n`;
+    msg += `Time: ${booking.start_time}–${booking.end_time}\n`;
+    msg += `Party: ${booking.party_size}\n`;
+    msg += `Status: ${booking.status}\n`;
+    if (booking.allocated_tables.length > 0) {
+      const lines = booking.allocated_tables.map((a) => {
+        const tt = tableTypes.find((t) => t.id === a.table_type_id);
+        const label = tt ? tt.label : a.table_type_id;
+        return `${a.count}× ${label}`;
+      });
+      msg += `Tables: ${lines.join(", ")}\n`;
+    }
+    await ctx.reply(msg, {
+      reply_markup: bookingActionsKeyboard(refCode),
+    });
+  });
+
+  bot.callbackQuery(/^guest:reschedule:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const refCode = ctx.match[1];
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.reply(
+        `Booking with reference **${refCode}** was not found. Please check the reference and try again.`,
+        { reply_markup: mainMenu() },
+      );
+      return;
+    }
+    if (booking.guest_telegram_id !== 0 && booking.guest_telegram_id !== ctx.from?.id) {
+      await ctx.reply(
+        `Booking **${refCode}** does not belong to you. Only the guest who made the booking can reschedule it.`,
+        { reply_markup: mainMenu() },
+      );
+      return;
+    }
+    if (booking.status !== "confirmed") {
+      await ctx.reply(
+        `Booking **${refCode}** cannot be rescheduled — it is **${booking.status}**. Only confirmed bookings can be rescheduled.`,
+        { reply_markup: mainMenu() },
+      );
+      return;
+    }
+    ctx.session.rescheduleBookingId = booking.id;
+    ctx.session.rescheduleRefCode = refCode;
+    ctx.session.selectedDate = booking.date;
+    ctx.session.partySize = booking.party_size;
+    await ctx.reply(
+      `✅ Booking ${refCode} has been released.\n\nShowing available time slots for **${booking.date}** (${booking.party_size} guest${booking.party_size > 1 ? "s" : ""}):`,
+    );
+    await showAvailableSlots(ctx, booking.date, booking.party_size);
+  });
+
+  bot.callbackQuery(/^guest:cancel:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const refCode = ctx.match[1];
+    await ctx.reply(
+      `Are you sure you want to cancel booking **${refCode}**? This action cannot be undone.`,
+      { reply_markup: confirmKeyboard(`guest:cancel_confirm:${refCode}`) },
+    );
+  });
+
+  bot.callbackQuery(/^guest:cancel_confirm:(.+):(yes|no)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const [, refCode, action] = ctx.match;
+    if (action === "no") {
+      await ctx.editMessageText("Booking cancellation was not applied.", {
+        reply_markup: mainMenu(),
+      });
+      return;
+    }
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.editMessageText("Booking not found.", {
+        reply_markup: mainMenu(),
+      });
+      return;
+    }
+    if (booking.guest_telegram_id !== 0 && booking.guest_telegram_id !== ctx.from?.id) {
+      await ctx.editMessageText(
+        `Booking **${refCode}** does not belong to you. Only the guest who made the booking can cancel it.`,
+        { reply_markup: mainMenu() },
+      );
+      return;
+    }
+    await storage.updateBookingStatus(booking.id, "cancelled");
+    await ctx.editMessageText(`✅ Booking **${refCode}** has been cancelled.`, {
+      reply_markup: mainMenu(),
+    });
   });
 
   bot.on("message:text").filter(

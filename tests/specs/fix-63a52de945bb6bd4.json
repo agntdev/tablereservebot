@@ -1,0 +1,107 @@
+[
+  {
+    "name": "booking via /book produces confirmation with View/Reschedule/Cancel inline buttons",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-15 14:00 2 TestGuest" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 View" }],
+                  [{ "text": "🔄 Reschedule" }],
+                  [{ "text": "❌ Cancel" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "guest:view inline button shows booking details with actions keyboard",
+    "steps": [
+      {
+        "send": { "callback": "guest:view:REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 View" }],
+                  [{ "text": "🔄 Reschedule" }],
+                  [{ "text": "❌ Cancel" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "guest:reschedule inline button starts reschedule flow showing available slots",
+    "steps": [
+      {
+        "send": { "callback": "guest:reschedule:REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Booking REF-TESTOWN has been released.\n\nShowing available time slots for **2026-06-20** (2 guests):"
+            }
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "guest:cancel inline button shows confirmation prompt",
+    "steps": [
+      {
+        "send": { "callback": "guest:cancel:REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "✅ Yes" }, { "text": "❌ No" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "guest:cancel_confirm:yes cancels booking",
+    "steps": [
+      {
+        "send": { "callback": "guest:cancel:REF-TESTOWN" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "guest:cancel_confirm:REF-TESTOWN:yes" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Booking **REF-TESTOWN** has been cancelled."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
