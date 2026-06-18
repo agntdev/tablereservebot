@@ -241,8 +241,34 @@ export function buildBot(token: string) {
       await ctx.reply("Invalid date format. Use YYYY-MM-DD (e.g. 2025-06-15).");
       return;
     }
+    const dateParts = date.split("-");
+    const year = Number.parseInt(dateParts[0], 10);
+    const month = Number.parseInt(dateParts[1], 10);
+    const day = Number.parseInt(dateParts[2], 10);
+    if (year < 2000 || month < 1 || month > 12 || day < 1) {
+      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15).");
+      return;
+    }
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day > daysInMonth) {
+      await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15).");
+      return;
+    }
+    const nowDate = new Date().toISOString().slice(0, 10);
+    if (date < nowDate) {
+      await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
+      return;
+    }
     if (!/^\d{2}:\d{2}$/.test(time)) {
       await ctx.reply("Invalid time format. Use HH:MM (e.g. 19:00).");
+      return;
+    }
+    const timeParts = time.split(":");
+    const hours = Number.parseInt(timeParts[0], 10);
+    const minutes = Number.parseInt(timeParts[1], 10);
+    if (!Number.isFinite(hours) || hours < 0 || hours > 23 ||
+        !Number.isFinite(minutes) || minutes < 0 || minutes > 59) {
+      await ctx.reply("Invalid time. Hours must be 00–23 and minutes must be 00–59 (e.g. 19:00).");
       return;
     }
     const partySize = Number(partySizeStr);
