@@ -38,6 +38,28 @@ export function makeBot() {
     "created_at", now,
   );
   void redis.sadd("tables:all", "T2");
+  const bid = "bk-test-OWNER";
+  void redis.hset(
+    `booking:${bid}`,
+    "id", bid,
+    "ref_code", "REF-TESTOWN",
+    "guest_telegram_id", "1",
+    "guest_name", "Owner",
+    "guest_phone", "",
+    "date", "2026-06-20",
+    "start_time", "14:00",
+    "end_time", "15:30",
+    "duration", "90",
+    "party_size", "2",
+    "allocated_tables", "[]",
+    "status", "confirmed",
+    "created_at", now,
+    "updated_at", now,
+  );
+  void redis.sadd("bookings:all", bid);
+  void redis.sadd("bookings:by-date:2026-06-20", bid);
+  void redis.set("bookings:by-ref:REF-TESTOWN", bid);
+  void redis.sadd("bookings:by-guest:1", bid);
   const storage = createStorage(redis);
   return buildBot(token, storage);
 }

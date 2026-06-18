@@ -1,0 +1,13 @@
+[
+  {
+    "name": "non-owner cannot reschedule another guest's booking",
+    "steps": [
+      {
+        "send": { "text": "/reschedule REF-TESTOWN", "userId": 2 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Booking **REF-TESTOWN** does not belong to you. Only the guest who made the booking can reschedule it." } }
+        ]
+      }
+    ]
+  }
+]
