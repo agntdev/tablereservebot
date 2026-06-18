@@ -1,0 +1,117 @@
+[
+  {
+    "name": "/mark_noshow by non-admin shows access denied",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow REF-TESTOWN", "userId": 999 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Access denied. You are not an admin."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/mark_noshow by admin marks booking as no-show with stats",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Booking **REF-TESTOWN** has been marked as a no-show.\n\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nNo-show count: 1",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/mark_noshow reports booking not found",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow NOSUCHCODE", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Booking with reference **NOSUCHCODE** was not found. Please check the reference and try again."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin callback flow marks booking as no-show with stats",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "❌ Cancel Booking", "callback_data": "booking:cancel:REF-TESTOWN" }],
+                  [{ "text": "🚫 Mark No-Show", "callback_data": "booking:noshow:REF-TESTOWN" }]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:noshow:REF-TESTOWN", "userId": 777 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Are you sure you want to mark booking **REF-TESTOWN** as a no-show?",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "✅ Yes", "callback_data": "booking:noshow_confirm:REF-TESTOWN:yes" },
+                    { "text": "❌ No", "callback_data": "booking:noshow_confirm:REF-TESTOWN:no" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:noshow_confirm:REF-TESTOWN:yes", "userId": 777 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Booking **REF-TESTOWN** has been marked as a no-show.\n\nThis guest has 1 no-show(s) on record.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
