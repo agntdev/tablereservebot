@@ -61,5 +61,6 @@ export function makeBot() {
   void redis.set("bookings:by-ref:REF-TESTOWN", bid);
   void redis.sadd("bookings:by-guest:1", bid);
   const storage = createStorage(redis);
-  return buildBot(token, storage);
+  const { bot } = buildBot(token, storage);
+  return bot;
 }

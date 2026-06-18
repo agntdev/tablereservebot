@@ -413,6 +413,18 @@ export class Storage {
   async deleteAllocation(bookingId: string): Promise<void> {
     await this.redis.del(KEY.allocation(bookingId));
   }
+
+  // ─── Reminders ────────────────────────────────────────────────────────
+
+  async hasReminderSent(bookingId: string): Promise<boolean> {
+    const k = `reminder:sent:${bookingId}`;
+    return (await this.redis.get(k)) !== null;
+  }
+
+  async markReminderSent(bookingId: string): Promise<void> {
+    const k = `reminder:sent:${bookingId}`;
+    await this.redis.set(k, "1");
+  }
 }
 
 export function createStorage(redis: StorageRedis): Storage {
