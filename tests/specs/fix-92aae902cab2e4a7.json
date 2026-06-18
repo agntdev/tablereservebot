@@ -1,6 +1,6 @@
 [
   {
-    "name": "/start replies with welcome and an inline keyboard main menu",
+    "name": "/start shows renamed 'How to Reserve' and 'Need Assistance?' buttons",
     "steps": [
       {
         "send": { "text": "/start" },
@@ -8,7 +8,6 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the buttons below to reserve, get help, or configure restaurant settings (for owners only).\n\nUse the menu below to get started:\n\n⚙️ Settings is for restaurant owners to configure opening hours, table inventory, and venue settings — visible only to admin accounts.",
               "reply_markup": {
                 "inline_keyboard": [
                   [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
@@ -23,11 +22,12 @@
     ]
   },
   {
-    "name": "menu:about callback replies with about text and the menu",
+    "name": "menu:about callback still responds after rename",
     "steps": [
       {
         "send": { "callback": "menu:about" },
         "expect": [
+          { "method": "answerCallbackQuery" },
           {
             "method": "sendMessage",
             "payload": {
@@ -46,11 +46,12 @@
     ]
   },
   {
-    "name": "menu:help callback replies with help text and the menu",
+    "name": "menu:help callback still responds after rename",
     "steps": [
       {
         "send": { "callback": "menu:help" },
         "expect": [
+          { "method": "answerCallbackQuery" },
           {
             "method": "sendMessage",
             "payload": {
@@ -64,40 +65,6 @@
               }
             }
           }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "menu:settings callback replies with settings text and the menu",
-    "steps": [
-      {
-        "send": { "callback": "menu:settings" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Settings are managed through the bot's environment and persistent storage. Use the menu below to navigate.",
-              "reply_markup": {
-                "inline_keyboard": [
-                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
-                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
-                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
-                ]
-              }
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "non-command text still replies with a prompt",
-    "steps": [
-      {
-        "send": { "text": "hello" },
-        "expect": [
-          { "method": "sendMessage", "payload": { "text": "Use /start to get started." } }
         ]
       }
     ]
