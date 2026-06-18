@@ -1,0 +1,60 @@
+[
+  {
+    "name": "calendar pick with typed party size 5 shows available slots",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\ud83d\udcc5 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-25" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "\u2705 You selected **2026-06-25**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\u2705 Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1\u201399):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "5" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\u2705 Date: 2026-06-25\nGuests: 5"
+            }
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      }
+    ]
+  }
+]
