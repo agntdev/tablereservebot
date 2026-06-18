@@ -289,7 +289,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
 
-    await storage.updateBookingStatus(original.id, "rescheduled");
+    await storage.updateBooking(original.id, { status: "rescheduled", allocated_tables: [] });
 
     const tableTypes = await storage.listTableTypes();
     const lines = result.tables.map((a) => {
