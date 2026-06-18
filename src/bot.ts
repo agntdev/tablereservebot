@@ -30,6 +30,13 @@ export interface Session {
   availableSlots?: Slot[];
   slotPage?: number;
   selectedSlot?: string;
+  collectingBookingGuestName?: boolean;
+  collectingBookingGuestPhone?: boolean;
+  bookingDate?: string;
+  bookingTime?: string;
+  bookingPartySize?: number;
+  bookingGuestName?: string;
+  bookingGuestPhone?: string | null;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -81,6 +88,110 @@ export function buildBot(token: string) {
     await ctx.reply(formatSlotsPrompt(dateStr, partySize, slots.length), {
       reply_markup: buildSlotKeyboard(slots, 0),
     });
+  }
+
+  async function finalizeBooking(ctx: BotContext<Session>): Promise<void> {
+    const { bookingDate, bookingTime, bookingPartySize, bookingGuestName, bookingGuestPhone } = ctx.session;
+    if (!bookingDate || !bookingTime || !bookingPartySize || !bookingGuestName) {
+      await ctx.reply("Booking session expired. Please start again with /book.");
+      return;
+    }
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+
+    const timeMins = (() => {
+      const [h, m] = bookingTime.split(":").map(Number);
+      return h * 60 + m;
+    })();
+    const endTimeMins = timeMins + settings.sitting_length;
+    const endHours = Math.floor(endTimeMins / 60) % 24;
+    const endMinutes = endTimeMins % 60;
+    const endTime =
+      String(endHours).padStart(2, "0") +
+      ":" +
+      String(endMinutes).padStart(2, "0");
+
+    const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const now = new Date().toISOString();
+
+    const booking: Booking = {
+      id: bookingId,
+      ref_code: refCode,
+      guest_telegram_id: ctx.from?.id ?? 0,
+      guest_name: bookingGuestName,
+      guest_phone: bookingGuestPhone ?? null,
+      date: bookingDate,
+      start_time: bookingTime,
+      end_time: endTime,
+      duration: settings.sitting_length,
+      party_size: bookingPartySize,
+      allocated_tables: [],
+      status: "confirmed",
+      created_at: now,
+      updated_at: now,
+    };
+
+    const result = await storage.createBookingAtomic(
+      booking,
+      bookingDate,
+      bookingTime,
+      endTime,
+      bookingPartySize,
+    );
+    if (!result.success) {
+      await ctx.reply(
+        `Cannot book: ${result.reason}\n` +
+          `Needed seats: ${result.needed_seats}\n` +
+          `Available seats: ${result.available_seats}`,
+      );
+      ctx.session.bookingDate = undefined;
+      ctx.session.bookingTime = undefined;
+      ctx.session.bookingPartySize = undefined;
+      ctx.session.bookingGuestName = undefined;
+      ctx.session.bookingGuestPhone = undefined;
+      ctx.session.collectingBookingGuestName = undefined;
+      ctx.session.collectingBookingGuestPhone = undefined;
+      return;
+    }
+
+    const tableTypes = await storage.listTableTypes();
+    const lines = result.tables.map((a) => {
+      const tt = tableTypes.find((t) => t.id === a.table_type_id);
+      const label = tt ? tt.label : a.table_type_id;
+      return `${a.count}× ${label}`;
+    });
+
+    await ctx.reply(
+      `✅ Booking confirmed!\n\n` +
+        `Ref: ${refCode}\n` +
+        `Name: ${bookingGuestName}\n` +
+        (bookingGuestPhone ? `Phone: ${bookingGuestPhone}\n` : "") +
+        `Date: ${bookingDate}\n` +
+        `Time: ${bookingTime}–${endTime}\n` +
+        `Party: ${bookingPartySize}\n` +
+        `Tables: ${lines.join(", ")}`,
+      { reply_markup: mainMenu() },
+    );
+
+    ctx.session.bookingDate = undefined;
+    ctx.session.bookingTime = undefined;
+    ctx.session.bookingPartySize = undefined;
+    ctx.session.bookingGuestName = undefined;
+    ctx.session.bookingGuestPhone = undefined;
+    ctx.session.collectingBookingGuestName = undefined;
+    ctx.session.collectingBookingGuestPhone = undefined;
   }
 
   bot.command("start", async (ctx) => {
@@ -277,6 +388,17 @@ export function buildBot(token: string) {
       return;
     }
 
+    if (nameParts.length === 0) {
+      ctx.session.bookingDate = date;
+      ctx.session.bookingTime = time;
+      ctx.session.bookingPartySize = partySize;
+      ctx.session.collectingBookingGuestName = true;
+      await ctx.reply("Please enter the guest name for the reservation:");
+      return;
+    }
+
+    const guestName = nameParts.join(" ");
+
     if (!storage) {
       await ctx.reply(
         "Booking is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.",
@@ -302,7 +424,6 @@ export function buildBot(token: string) {
       ":" +
       String(endMinutes).padStart(2, "0");
 
-    const guestName = nameParts.length > 0 ? nameParts.join(" ") : null;
     const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const now = new Date().toISOString();
@@ -311,7 +432,7 @@ export function buildBot(token: string) {
       id: bookingId,
       ref_code: refCode,
       guest_telegram_id: ctx.from?.id ?? 0,
-      guest_name: guestName ?? ctx.from?.first_name ?? null,
+      guest_name: guestName,
       guest_phone: null,
       date,
       start_time: time,
@@ -348,6 +469,7 @@ export function buildBot(token: string) {
         `Time: ${time}–${endTime}\n` +
         `Party: ${partySize}\n` +
         `Tables: ${lines.join(", ")}`,
+      { reply_markup: mainMenu() },
     );
   });
 
@@ -379,6 +501,13 @@ export function buildBot(token: string) {
     );
   });
 
+  bot.callbackQuery("guest:skip_phone", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    ctx.session.bookingGuestPhone = null;
+    ctx.session.collectingBookingGuestPhone = false;
+    await finalizeBooking(ctx);
+  });
+
   bot.on("message:text").filter(
     (ctx) => !!ctx.msg.entities?.some((e) => e.type === "bot_command"),
     async (ctx) => {
@@ -407,6 +536,31 @@ export function buildBot(token: string) {
       ctx.session.awaitingPartySize = false;
       await ctx.reply(formatPartySizeConfirmation(dateStr, partySize));
       await showAvailableSlots(ctx, dateStr, partySize);
+      return;
+    }
+
+    if (ctx.session.collectingBookingGuestName) {
+      const name = ctx.msg.text.trim();
+      if (!name) {
+        await ctx.reply("Please enter a valid guest name.");
+        return;
+      }
+      ctx.session.bookingGuestName = name;
+      ctx.session.collectingBookingGuestName = false;
+      ctx.session.collectingBookingGuestPhone = true;
+      await ctx.reply("Please enter a contact phone number, or skip:", {
+        reply_markup: inlineKeyboard([
+          [inlineButton("Skip", "guest:skip_phone")],
+        ]),
+      });
+      return;
+    }
+
+    if (ctx.session.collectingBookingGuestPhone) {
+      const phone = ctx.msg.text.trim();
+      ctx.session.bookingGuestPhone = phone || null;
+      ctx.session.collectingBookingGuestPhone = false;
+      await finalizeBooking(ctx);
       return;
     }
 
