@@ -1,0 +1,113 @@
+[
+  {
+    "name": "calendar pick with party size 2 reports missing storage",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-15**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:2" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\nGuests: 2"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "calendar pick with typed party size 5 reports missing storage",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-20" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-20**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1–99):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "5" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\nGuests: 5"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

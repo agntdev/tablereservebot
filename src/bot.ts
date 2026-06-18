@@ -5,7 +5,7 @@ import {
   inlineButton,
   inlineKeyboard,
 } from "./toolkit/index.js";
-import { listBookableSlots } from "./availability.js";
+import { findNearbyAvailableDates, listBookableSlots } from "./availability.js";
 import { buildCalendar } from "./calendar.js";
 import {
   buildPartySizeKeyboard,
@@ -72,7 +72,15 @@ export function buildBot(token: string) {
 
     const { slots, error } = await listBookableSlots(storage, dateStr, partySize);
     if (error) {
-      await ctx.reply(error);
+      const nearby = await findNearbyAvailableDates(storage, dateStr, partySize);
+      if (nearby.length > 0) {
+        const dateList = nearby.join(", ");
+        await ctx.reply(
+          `${error}\n\nNearest available dates: ${dateList}. Use /calendar to pick another date.`,
+        );
+      } else {
+        await ctx.reply(error);
+      }
       return;
     }
 
