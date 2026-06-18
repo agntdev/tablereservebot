@@ -4,6 +4,9 @@ import { createStorage } from "./storage/index.js";
 
 export function makeBot() {
   const token = process.env.BOT_TOKEN ?? "harness-test-token";
+  if (!process.env.ADMIN_IDS) {
+    process.env.ADMIN_IDS = "777";
+  }
   const redis = createMemoryStorageRedis();
   const now = new Date().toISOString();
   void redis.hset(

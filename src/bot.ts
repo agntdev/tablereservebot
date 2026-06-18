@@ -6,6 +6,7 @@ import {
   inlineKeyboard,
   confirmKeyboard,
 } from "./toolkit/index.js";
+import { isAdmin } from "./admin.js";
 import { findNearbyAvailableDates, listBookableSlots } from "./availability.js";
 import { buildCalendar } from "./calendar.js";
 import {
@@ -747,6 +748,19 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     );
 
     await showAvailableSlots(ctx, booking.date, booking.party_size);
+  });
+
+  const admin = bot.filter((ctx) => isAdmin(ctx));
+
+  admin.command("admin", async (ctx) => {
+    await ctx.reply(
+      "Admin panel\n\nUse the menu below to navigate:",
+      { reply_markup: mainMenu() },
+    );
+  });
+
+  bot.command("admin", async (ctx) => {
+    await ctx.reply("Access denied. You are not an admin.");
   });
 
   bot.callbackQuery("guest:skip_phone", async (ctx) => {
