@@ -1,0 +1,25 @@
+[
+  {
+    "name": "menu:help callback replies with help text and the menu",
+    "steps": [
+      {
+        "send": { "callback": "menu:help" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Available commands:\n/start — Show the main menu\n\nUse the menu buttons below to navigate.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
