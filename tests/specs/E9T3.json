@@ -14,18 +14,18 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-15" },
+        "send": { "callback": "cal:pick:2026-06-25" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "\u2705 You selected **2026-06-15**."
+              "text": "\u2705 You selected **2026-06-25**."
             }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "\u2705 Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+              "text": "\u2705 Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number."
             }
           }
         ]
@@ -36,13 +36,13 @@
           {
             "method": "editMessageText",
             "payload": {
-              "text": "\u2705 Date: 2026-06-15\nGuests: 2"
+              "text": "\u2705 Date: 2026-06-25\nGuests: 2"
             }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "\u2705 Date: 2026-06-15\nGuests: 2\n\n47 time slots available. Pick a time:"
+              "text": "\u2705 Date: 2026-06-25\nGuests: 2\n\n47 time slots available. Pick a time:"
             }
           }
         ]

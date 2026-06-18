@@ -14,13 +14,13 @@
     "name": "/book confirms a valid reservation and allocateFirstFit rejects when existing bookings consume capacity",
     "steps": [
       {
-        "send": { "text": "/book 2025-06-15 19:00 2 Alice" },
+        "send": { "text": "/book 2026-06-25 19:00 2 Alice" },
         "expect": [
           { "method": "sendMessage" }
         ]
       },
       {
-        "send": { "text": "/book 2025-06-15 19:00 25 Bob" },
+        "send": { "text": "/book 2026-06-25 19:00 25 Bob" },
         "expect": [
           { "method": "sendMessage", "payload": { "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 25\nAvailable seats: 22" } }
         ]
@@ -31,7 +31,7 @@
     "name": "/book with party size exceeding total venue capacity shows exact seat counts",
     "steps": [
       {
-        "send": { "text": "/book 2025-06-15 20:00 30 Eve" },
+        "send": { "text": "/book 2026-06-25 20:00 30 Eve" },
         "expect": [
           { "method": "sendMessage", "payload": { "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 30\nAvailable seats: 26" } }
         ]
@@ -42,7 +42,7 @@
     "name": "allocateFirstFit succeeds for a party that requires multiple table types",
     "steps": [
       {
-        "send": { "text": "/book 2025-06-15 18:00 6 Team" },
+        "send": { "text": "/book 2026-06-25 18:00 6 Team" },
         "expect": [
           { "method": "sendMessage" }
         ]
@@ -53,7 +53,7 @@
     "name": "/slots after a booking is created still returns generated slots",
     "steps": [
       {
-        "send": { "text": "/book 2025-06-15 21:00 2 Late" },
+        "send": { "text": "/book 2026-06-25 21:00 2 Late" },
         "expect": [
           { "method": "sendMessage" }
         ]

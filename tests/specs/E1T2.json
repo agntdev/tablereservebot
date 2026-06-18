@@ -110,12 +110,12 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-15" },
+        "send": { "callback": "cal:pick:2026-06-20" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "✅ You selected **2026-06-15**."
+              "text": "✅ You selected **2026-06-20**."
             }
           }
         ]

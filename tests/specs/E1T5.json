@@ -3,7 +3,7 @@
     "name": "interactive booking collects name and phone then reports missing storage",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 19:00 4" },
+        "send": { "text": "/book 2026-06-25 19:00 4" },
         "expect": [
           {
             "method": "sendMessage",
@@ -41,7 +41,7 @@
     "name": "skip phone in interactive booking reports missing storage",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 19:00 3" },
+        "send": { "text": "/book 2026-06-25 19:00 3" },
         "expect": [
           {
             "method": "sendMessage",
@@ -79,7 +79,7 @@
     "name": "empty guest name is rejected in interactive booking",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 19:00 2" },
+        "send": { "text": "/book 2026-06-25 19:00 2" },
         "expect": [
           {
             "method": "sendMessage",
@@ -106,7 +106,7 @@
     "name": "direct /book with name confirms booking with inline buttons",
     "steps": [
       {
-        "send": { "text": "/book 2026-06-15 19:00 4 John" },
+        "send": { "text": "/book 2026-06-25 19:00 4 John" },
         "expect": [
           {
             "method": "sendMessage",
