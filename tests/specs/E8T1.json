@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/admin denied for non-admin user",
+    "steps": [
+      {
+        "send": { "text": "/admin", "userId": 1 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Access denied. You are not an admin." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/admin accessible for admin user",
+    "steps": [
+      {
+        "send": { "text": "/admin", "userId": 777 },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Admin panel\n\nUse the menu below to navigate:" } }
+        ]
+      }
+    ]
+  }
+]
