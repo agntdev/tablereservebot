@@ -53,3 +53,27 @@ export async function listBookableSlots(
 
   return { slots: bookable };
 }
+
+export async function findNearbyAvailableDates(
+  storage: Storage,
+  date: string,
+  partySize: number,
+  maxSearchDays: number = 5,
+): Promise<string[]> {
+  const base = new Date(date + "T00:00:00");
+  if (isNaN(base.getTime())) return [];
+
+  const found: string[] = [];
+  for (let d = 1; d <= maxSearchDays; d++) {
+    const next = new Date(base);
+    next.setDate(next.getDate() + d);
+    const dateStr = next.toISOString().slice(0, 10);
+    const result = await listBookableSlots(storage, dateStr, partySize);
+    if (result.slots.length > 0) {
+      found.push(dateStr);
+      if (found.length >= 3) break;
+    }
+  }
+
+  return found;
+}
