@@ -1,0 +1,73 @@
+[
+  {
+    "name": "/mark_noshow without args shows usage",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Usage: /mark_noshow <ref_code>\n\nExample: /mark_noshow REF-ABC123\n\nMark a confirmed booking as a no-show."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/mark_noshow with unknown ref shows not found",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow NOEXIST", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Booking with reference **NOEXIST** was not found. Please check the reference and try again."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/mark_noshow with valid ref marks booking as no-show",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Booking **REF-TESTOWN** has been marked as a no-show.\n\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/mark_noshow by non-admin shows access denied",
+    "steps": [
+      {
+        "send": { "text": "/mark_noshow REF-TESTOWN", "userId": 999 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Access denied. You are not an admin."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
