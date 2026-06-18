@@ -1,0 +1,19 @@
+[
+  {
+    "name": "/book confirms a valid reservation and allocateFirstFit rejects when existing bookings consume capacity",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-26 19:00 2 Alice" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "text": "/book 2026-06-26 19:00 25 Bob" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 25\nAvailable seats: 22" } }
+        ]
+      }
+    ]
+  }
+]
