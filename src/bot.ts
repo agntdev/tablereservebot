@@ -104,14 +104,14 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     dateStr: string,
     partySize: number,
   ): Promise<void> {
-    const todayStr = await getTzTodayStr();
-    if (dateStr < todayStr) {
-      await ctx.reply("Date cannot be in the past. Please pick today or a future date with /calendar.");
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
       return;
     }
 
-    if (!storage) {
-      await ctx.reply(STORAGE_UNAVAILABLE);
+    const todayStr = await getTzTodayStr();
+    if (dateStr < todayStr) {
+      await ctx.reply("Date cannot be in the past. Please pick today or a future date with /calendar.");
       return;
     }
 
