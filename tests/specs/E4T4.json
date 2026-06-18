@@ -40,7 +40,7 @@
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Booking **REF-TESTOWN** has been marked as a no-show.\n\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2",
+              "text": "✅ Booking **REF-TESTOWN** has been marked as a no-show.\n\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nNo-show count: 1",
               "reply_markup": {
                 "inline_keyboard": [
                   [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
