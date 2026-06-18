@@ -1,13 +1,12 @@
 import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import { buildCalendar } from "./calendar.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
 import { generateSlots } from "./slots.js";
 
-// The per-chat session shape (ephemeral conversation state only). Extend as the
-// bot grows. Durable domain data must NOT live here — use the toolkit's
-// persistent storage (see AGENTS.md).
 export interface Session {
-  // example: step?: "awaiting_amount";
+  calYear?: number;
+  calMonth?: number;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -73,8 +72,38 @@ export function buildBot(token: string) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation",
     );
+  });
+
+  bot.command("calendar", async (ctx) => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    ctx.session.calYear = year;
+    ctx.session.calMonth = month;
+    const cal = buildCalendar(year, month);
+    await ctx.reply(cal.text, { reply_markup: cal.keyboard });
+  });
+
+  bot.callbackQuery(/^cal:nav:(\d+):(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const year = Number.parseInt(ctx.match[1], 10);
+    const month = Number.parseInt(ctx.match[2], 10);
+    ctx.session.calYear = year;
+    ctx.session.calMonth = month;
+    const cal = buildCalendar(year, month);
+    await ctx.editMessageText(cal.text, { reply_markup: cal.keyboard });
+  });
+
+  bot.callbackQuery(/^cal:pick:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const dateStr = ctx.match[1];
+    await ctx.editMessageText(`✅ You selected **${dateStr}**.`);
+  });
+
+  bot.callbackQuery("cal:ignore", async (ctx) => {
+    await ctx.answerCallbackQuery();
   });
 
   bot.command("book", async (ctx) => {
