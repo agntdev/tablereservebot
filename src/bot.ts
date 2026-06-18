@@ -667,7 +667,10 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
 
-    await storage.updateBookingStatus(booking.id, "rescheduled");
+    await storage.updateBooking(booking.id, {
+      status: "rescheduled",
+      allocated_tables: [],
+    });
 
     ctx.session.rescheduleBookingId = booking.id;
     ctx.session.rescheduleRefCode = refCode;
