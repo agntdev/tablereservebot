@@ -396,7 +396,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/booking — View booking details by reference code\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/booking — View booking details by reference code\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation\n/mark_noshow — Mark a booking as no-show (admin only)",
     );
   });
 
@@ -934,6 +934,51 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
   });
 
   bot.command("admin", async (ctx) => {
+    await ctx.reply("Access denied. You are not an admin.");
+  });
+
+  admin.command("mark_noshow", async (ctx) => {
+    const args = ctx.msg.text.split(/\s+/).slice(1);
+    if (args.length < 1) {
+      await ctx.reply(
+        "Usage: /mark_noshow <ref_code>\n\nExample: /mark_noshow REF-ABC123\n\nMark a confirmed booking as a no-show.",
+      );
+      return;
+    }
+    const refCode = args[0].trim().toUpperCase();
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.reply(
+        `Booking with reference **${refCode}** was not found. Please check the reference and try again.`,
+      );
+      return;
+    }
+
+    if (booking.status !== "confirmed") {
+      await ctx.reply(
+        `Booking **${refCode}** cannot be marked as no-show — it is **${booking.status}**. Only confirmed bookings can be marked as no-show.`,
+      );
+      return;
+    }
+
+    await storage.updateBookingStatus(booking.id, "no_show");
+    await ctx.reply(
+      `✅ Booking **${refCode}** has been marked as a no-show.\n\n` +
+        `Guest: ${booking.guest_name ?? "N/A"}\n` +
+        `Date: ${booking.date}\n` +
+        `Time: ${booking.start_time}–${booking.end_time}\n` +
+        `Party: ${booking.party_size}`,
+      { reply_markup: mainMenu() },
+    );
+  });
+
+  bot.command("mark_noshow", async (ctx) => {
     await ctx.reply("Access denied. You are not an admin.");
   });
 
