@@ -358,10 +358,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       { reply_markup: mainMenu() },
     );
     const { year, month } = await getTzYearMonth();
-    const todayStr = await getTzTodayStr();
     ctx.session.calYear = year;
     ctx.session.calMonth = month;
-    const cal = buildCalendar(year, month, todayStr);
+    const cal = buildCalendar(year, month);
     await ctx.reply(cal.text, { reply_markup: cal.keyboard });
   });
 
@@ -436,10 +435,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("calendar", async (ctx) => {
     const { year, month } = await getTzYearMonth();
-    const todayStr = await getTzTodayStr();
     ctx.session.calYear = year;
     ctx.session.calMonth = month;
-    const cal = buildCalendar(year, month, todayStr);
+    const cal = buildCalendar(year, month);
     await ctx.reply(cal.text, { reply_markup: cal.keyboard });
   });
 
@@ -449,8 +447,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const month = Number.parseInt(ctx.match[2], 10);
     ctx.session.calYear = year;
     ctx.session.calMonth = month;
-    const todayStr = await getTzTodayStr();
-    const cal = buildCalendar(year, month, todayStr);
+    const cal = buildCalendar(year, month);
     await ctx.editMessageText(cal.text, { reply_markup: cal.keyboard });
   });
 
@@ -458,7 +455,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await ctx.answerCallbackQuery();
     const dateStr = ctx.match[1];
     const todayStr = await getTzTodayStr();
-    if (dateStr < todayStr) {
+    const [ty, tm] = todayStr.split("-").map(Number);
+    const [dy, dm] = dateStr.split("-").map(Number);
+    if (dy < ty || (dy === ty && dm < tm)) {
       await ctx.editMessageText(
         `Date **${dateStr}** is in the past. Please select today or a future date.`,
       );
@@ -609,7 +608,9 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
     const nowDate = await getTzTodayStr();
-    if (date < nowDate) {
+    const [ny, nm] = nowDate.split("-").map(Number);
+    const [by, bm] = date.split("-").map(Number);
+    if (by < ny || (by === ny && bm < nm)) {
       await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
       return;
     }

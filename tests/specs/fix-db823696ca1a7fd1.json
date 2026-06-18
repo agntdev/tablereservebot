@@ -1,0 +1,138 @@
+[
+  {
+    "name": "/start replies with greeting and reservation steps",
+    "steps": [
+      {
+        "send": { "text": "/start" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the buttons below to reserve, get help, or configure restaurant settings (for owners only).\n\nUse the menu below to get started:\n\n⚙️ Settings is for restaurant owners to configure opening hours, table inventory, and venue settings — visible only to admin accounts.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "calendar dates use cal:pick callbacks (no cal:ignore for same-month)",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "1", "callback_data": "cal:pick:2026-06-01" },
+                    { "text": "2", "callback_data": "cal:pick:2026-06-02" },
+                    { "text": "3", "callback_data": "cal:pick:2026-06-03" },
+                    { "text": "4", "callback_data": "cal:pick:2026-06-04" },
+                    { "text": "5", "callback_data": "cal:pick:2026-06-05" },
+                    { "text": "6", "callback_data": "cal:pick:2026-06-06" },
+                    { "text": "7", "callback_data": "cal:pick:2026-06-07" }
+                  ],
+                  [
+                    { "text": "8", "callback_data": "cal:pick:2026-06-08" },
+                    { "text": "9", "callback_data": "cal:pick:2026-06-09" },
+                    { "text": "10", "callback_data": "cal:pick:2026-06-10" },
+                    { "text": "11", "callback_data": "cal:pick:2026-06-11" },
+                    { "text": "12", "callback_data": "cal:pick:2026-06-12" },
+                    { "text": "13", "callback_data": "cal:pick:2026-06-13" },
+                    { "text": "14", "callback_data": "cal:pick:2026-06-14" }
+                  ],
+                  [
+                    { "text": "15", "callback_data": "cal:pick:2026-06-15" },
+                    { "text": "16", "callback_data": "cal:pick:2026-06-16" },
+                    { "text": "17", "callback_data": "cal:pick:2026-06-17" },
+                    { "text": "18", "callback_data": "cal:pick:2026-06-18" },
+                    { "text": "19", "callback_data": "cal:pick:2026-06-19" },
+                    { "text": "20", "callback_data": "cal:pick:2026-06-20" },
+                    { "text": "21", "callback_data": "cal:pick:2026-06-21" }
+                  ],
+                  [
+                    { "text": "22", "callback_data": "cal:pick:2026-06-22" },
+                    { "text": "23", "callback_data": "cal:pick:2026-06-23" },
+                    { "text": "24", "callback_data": "cal:pick:2026-06-24" },
+                    { "text": "25", "callback_data": "cal:pick:2026-06-25" },
+                    { "text": "26", "callback_data": "cal:pick:2026-06-26" },
+                    { "text": "27", "callback_data": "cal:pick:2026-06-27" },
+                    { "text": "28", "callback_data": "cal:pick:2026-06-28" }
+                  ],
+                  [
+                    { "text": "29", "callback_data": "cal:pick:2026-06-29" },
+                    { "text": "30", "callback_data": "cal:pick:2026-06-30" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" }
+                  ],
+                  [
+                    { "text": "◀ Prev", "callback_data": "cal:nav:2026:4" },
+                    { "text": "Next ▶", "callback_data": "cal:nav:2026:6" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cal:pick accepts same-month date and prompts for party size",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "✅ You selected **2026-06-15**." }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book enters interactive mode for same-month date",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-18 19:00 4" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  }
+]
