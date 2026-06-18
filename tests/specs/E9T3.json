@@ -1,0 +1,100 @@
+[
+  {
+    "name": "calendar flow with storage shows available slots",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\ud83d\udcc5 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "\u2705 You selected **2026-06-15**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\u2705 Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:2" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "\u2705 Date: 2026-06-15\nGuests: 2"
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "\u2705 Date: 2026-06-15\nGuests: 2\n\n47 time slots available. Pick a time:"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "book command with full details completes successfully",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-25 09:00 2" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter the guest name for the reservation:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "Jane Doe" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a contact phone number, or skip:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "555-1234" },
+        "expect": [
+          {
+            "method": "sendMessage"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book with guest name in command completes booking",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-26 10:00 4 John Smith" },
+        "expect": [
+          {
+            "method": "sendMessage"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { allocateFirstFit, type AllocationResult } from "../allocate.js";
+import { allocateFirstFit, timesOverlap, type AllocationResult } from "../allocate.js";
 import type {
   AllocationDetail,
   Booking,
@@ -309,10 +309,10 @@ export class Storage {
   }
 
   /**
-   * Atomically check availability and create a booking for a time slot.
-   * Uses a Redis SET-NX lock on the date+time window to prevent concurrent
-   * double-bookings: if two guests try to book overlapping time slots
-   * simultaneously, only one acquires the lock and completes.
+   * Atomically check availability and create a booking for a time slot
+   * using optimistic locking. Reads current state without a lock, computes
+   * an allocation, then acquires a date-level lock to verify no conflicting
+   * bookings were inserted concurrently. Retries on conflict up to 3 times.
    */
   async createBookingAtomic(
     booking: Booking,
@@ -321,36 +321,79 @@ export class Storage {
     endTime: string,
     partySize: number,
   ): Promise<AllocationResult> {
-    const lockKey = `lock:book:${date}:${startTime}:${endTime}`;
+    const MAX_RETRIES = 3;
+    const activeStatuses = new Set<BookingStatus>(["confirmed", "rescheduled"]);
 
-    const acquired = await this.redis.set(lockKey, "1", "EX", 10, "NX");
-    if (!acquired) {
-      return {
-        success: false,
-        reason: "This time slot is currently being booked by another guest. Please try again in a moment.",
-        available_seats: 0,
-        needed_seats: partySize,
-      };
-    }
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const bookingsBefore = await this.listBookingsByDate(date);
+      const overlappingBefore = bookingsBefore.filter(
+        (b) =>
+          activeStatuses.has(b.status) &&
+          timesOverlap(b.start_time, b.end_time, startTime, endTime),
+      );
+      const snapshot = overlappingBefore.map((b) => `${b.id}:${b.status}`).sort().join(",");
 
-    try {
       const result = await allocateFirstFit(this, date, startTime, endTime, partySize);
       if (!result.success) {
         return result;
       }
 
-      booking.allocated_tables = result.tables;
-      await this.createBooking(booking);
-      await this.saveAllocation({
-        booking_id: booking.id,
-        table_types: result.tables,
-        created_at: booking.created_at,
-      });
+      const lockKey = `lock:book:${date}`;
+      const acquired = await this.redis.set(lockKey, "1", "EX", 5, "NX");
+      if (!acquired) {
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, 30 * (attempt + 1)));
+          continue;
+        }
+        return {
+          success: false,
+          reason: "Too many concurrent bookings. Please try again in a moment.",
+          available_seats: 0,
+          needed_seats: partySize,
+        };
+      }
 
-      return result;
-    } finally {
-      await this.redis.del(lockKey);
+      try {
+        const bookingsAfter = await this.listBookingsByDate(date);
+        const overlappingAfter = bookingsAfter.filter(
+          (b) =>
+            activeStatuses.has(b.status) &&
+            timesOverlap(b.start_time, b.end_time, startTime, endTime),
+        );
+        const afterSnapshot = overlappingAfter.map((b) => `${b.id}:${b.status}`).sort().join(",");
+
+        if (afterSnapshot !== snapshot) {
+          if (attempt < MAX_RETRIES - 1) {
+            continue;
+          }
+          return {
+            success: false,
+            reason: "This time slot was just booked by another guest. Please try again.",
+            available_seats: 0,
+            needed_seats: partySize,
+          };
+        }
+
+        booking.allocated_tables = result.tables;
+        await this.createBooking(booking);
+        await this.saveAllocation({
+          booking_id: booking.id,
+          table_types: result.tables,
+          created_at: booking.created_at,
+        });
+
+        return result;
+      } finally {
+        await this.redis.del(lockKey);
+      }
     }
+
+    return {
+      success: false,
+      reason: "Unable to complete booking after multiple attempts. Please try again.",
+      available_seats: 0,
+      needed_seats: partySize,
+    };
   }
 
   async getAllocation(bookingId: string): Promise<AllocationDetail | null> {

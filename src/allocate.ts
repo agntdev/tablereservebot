@@ -10,7 +10,7 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function timesOverlap(
+export function timesOverlap(
   aStart: string,
   aEnd: string,
   bStart: string,
