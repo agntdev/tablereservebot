@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/book with guest name sends confirmation message",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-06-15 17:00 2 Alice" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  }
+]
