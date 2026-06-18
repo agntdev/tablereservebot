@@ -1,0 +1,217 @@
+[
+  {
+    "name": "/booking without args shows usage",
+    "steps": [
+      {
+        "send": { "text": "/booking" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Usage: /booking <ref_code>\n\nExample: /booking REF-ABC123"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/booking with unknown ref shows not found",
+    "steps": [
+      {
+        "send": { "text": "/booking NOEXIST" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Booking with reference **NOEXIST** was not found. Please check the reference and try again."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/booking with valid ref shows booking details and main menu",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/booking with admin shows admin action buttons",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "❌ Cancel Booking", "callback_data": "booking:cancel:REF-TESTOWN" }],
+                  [{ "text": "🚫 Mark No-Show", "callback_data": "booking:noshow:REF-TESTOWN" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin cancel booking confirmation shows yes/no buttons",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:cancel:REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Are you sure you want to cancel booking **REF-TESTOWN**? This action cannot be undone.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "✅ Yes", "callback_data": "booking:cancel_confirm:REF-TESTOWN:yes" },
+                    { "text": "❌ No", "callback_data": "booking:cancel_confirm:REF-TESTOWN:no" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin cancel booking confirm yes applies cancellation",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:cancel_confirm:REF-TESTOWN:yes", "userId": 777 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Booking **REF-TESTOWN** has been cancelled.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin cancel booking confirm no does not apply cancellation",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:cancel_confirm:REF-TESTOWN:no", "userId": 777 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Booking cancellation was not applied.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "admin mark no-show confirmation shows yes/no buttons",
+    "steps": [
+      {
+        "send": { "text": "/booking REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📋 Booking Details\n\nRef: REF-TESTOWN\nGuest: Owner\nDate: 2026-06-20\nTime: 14:00–15:30\nParty: 2\nStatus: confirmed\n"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "booking:noshow:REF-TESTOWN", "userId": 777 },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Are you sure you want to mark booking **REF-TESTOWN** as a no-show?",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "✅ Yes", "callback_data": "booking:noshow_confirm:REF-TESTOWN:yes" },
+                    { "text": "❌ No", "callback_data": "booking:noshow_confirm:REF-TESTOWN:no" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
