@@ -18,7 +18,7 @@ import {
 } from "./party.js";
 import { buildSlotKeyboard, formatSlotsPrompt } from "./slot-picker.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
-import type { Booking } from "./storage/types.js";
+import type { Booking, Settings } from "./storage/types.js";
 import { generateSlots, type Slot } from "./slots.js";
 
 const STORAGE_UNAVAILABLE =
@@ -978,7 +978,122 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     );
   });
 
+  admin.command("settings", async (ctx) => {
+    const args = ctx.msg.text.split(/\s+/).slice(1);
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    if (args.length === 0) {
+      const settings = await storage.getSettings();
+      if (!settings) {
+        await ctx.reply(
+          "No settings configured yet.\n\n" +
+            "Use /settings set <key> <value> to configure settings.\n" +
+            "Keys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\n" +
+            "Example: /settings set open_time 09:00",
+          { reply_markup: mainMenu() },
+        );
+        return;
+      }
+
+      const msg =
+        `Current Settings:\n\n` +
+        `Open Time: ${settings.open_time}\n` +
+        `Close Time: ${settings.close_time}\n` +
+        `Timezone: ${settings.timezone}\n` +
+        `Sitting Length: ${settings.sitting_length} min\n` +
+        `Slot Increment: ${settings.slot_increment} min\n` +
+        `Reminder Lead Time: ${settings.reminder_lead_time} min\n\n` +
+        `To update a setting, use: /settings set <key> <value>`;
+
+      await ctx.reply(msg, { reply_markup: mainMenu() });
+      return;
+    }
+
+    if (args[0] === "set") {
+      if (args.length < 3) {
+        await ctx.reply(
+          "Usage: /settings set <key> <value>\n\n" +
+            "Keys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\n" +
+            "Example: /settings set open_time 09:00",
+        );
+        return;
+      }
+
+      const key = args[1];
+      const value = args.slice(2).join(" ");
+
+      const validKeys = [
+        "open_time",
+        "close_time",
+        "timezone",
+        "sitting_length",
+        "slot_increment",
+        "reminder_lead_time",
+      ];
+      if (!validKeys.includes(key)) {
+        await ctx.reply(
+          `Unknown setting key: "${key}". Valid keys: ${validKeys.join(", ")}.`,
+        );
+        return;
+      }
+
+      if (key === "open_time" || key === "close_time") {
+        if (!/^\d{2}:\d{2}$/.test(value)) {
+          await ctx.reply(`${key} must be in HH:MM format (e.g. 09:00).`);
+          return;
+        }
+        const [h, m] = value.split(":").map(Number);
+        if (h < 0 || h > 23 || m < 0 || m > 59) {
+          await ctx.reply(
+            `${key} must have hours 00–23 and minutes 00–59.`,
+          );
+          return;
+        }
+      }
+
+      if (["sitting_length", "slot_increment", "reminder_lead_time"].includes(key)) {
+        const n = Number(value);
+        if (!Number.isFinite(n) || n < 1 || !Number.isInteger(n)) {
+          await ctx.reply(`${key} must be a positive integer (e.g. 90).`);
+          return;
+        }
+      }
+
+      const current = await storage.getSettings();
+      const now = new Date().toISOString();
+      const updated: Settings = {
+        open_time: (key === "open_time" ? value : current?.open_time) ?? "09:00",
+        close_time: (key === "close_time" ? value : current?.close_time) ?? "22:00",
+        timezone: (key === "timezone" ? value : current?.timezone) ?? "UTC",
+        sitting_length: key === "sitting_length" ? Number(value) : (current?.sitting_length ?? 90),
+        slot_increment: key === "slot_increment" ? Number(value) : (current?.slot_increment ?? 15),
+        reminder_lead_time: key === "reminder_lead_time" ? Number(value) : (current?.reminder_lead_time ?? 120),
+        created_at: current?.created_at ?? now,
+        updated_at: now,
+      };
+
+      await storage.saveSettings(updated);
+      await ctx.reply(`✅ ${key} set to ${value}.`, { reply_markup: mainMenu() });
+      return;
+    }
+
+    await ctx.reply(
+      "Usage: /settings — show current settings\n" +
+        "/settings set <key> <value> — update a setting\n\n" +
+        "Keys: open_time, close_time, timezone, sitting_length, slot_increment, reminder_lead_time\n\n" +
+        "Example: /settings set open_time 08:00",
+    );
+  });
+
   bot.command("mark_noshow", async (ctx) => {
+    await ctx.reply("Access denied. You are not an admin.");
+  });
+
+  bot.command("settings", async (ctx) => {
     await ctx.reply("Access denied. You are not an admin.");
   });
 
