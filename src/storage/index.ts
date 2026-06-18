@@ -259,7 +259,13 @@ export class Storage {
     const args: string[] = [];
     if (updates.guest_name !== undefined) args.push("guest_name", updates.guest_name ?? "");
     if (updates.guest_phone !== undefined) args.push("guest_phone", updates.guest_phone ?? "");
-    if (updates.date !== undefined) args.push("date", updates.date);
+    if (updates.date !== undefined) {
+      args.push("date", updates.date);
+      if (updates.date !== b.date) {
+        await this.redis.srem(KEY.bookingsByDate(b.date), id);
+        await this.redis.sadd(KEY.bookingsByDate(updates.date), id);
+      }
+    }
     if (updates.start_time !== undefined) args.push("start_time", updates.start_time);
     if (updates.end_time !== undefined) args.push("end_time", updates.end_time);
     if (updates.duration !== undefined) args.push("duration", String(updates.duration));
