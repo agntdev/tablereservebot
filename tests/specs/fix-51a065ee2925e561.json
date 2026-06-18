@@ -1,0 +1,25 @@
+[
+  {
+    "name": "guest:reschedule callback with nonexistent ref returns not found",
+    "steps": [
+      {
+        "send": { "callback": "guest:reschedule:NONEXIST" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Booking with reference **NONEXIST** was not found. Please check the reference and try again.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 How to Reserve", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Need Assistance?", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

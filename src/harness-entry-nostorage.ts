@@ -10,6 +10,8 @@ export function makeBot() {
   if (!process.env.ADMIN_IDS) {
     process.env.ADMIN_IDS = "777";
   }
+  // Ensure neither persistent nor session storage tries to connect to Redis.
+  delete process.env.REDIS_URL;
   const { bot } = buildBot(token, null);
   return bot;
 }
