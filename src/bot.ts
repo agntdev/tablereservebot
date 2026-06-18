@@ -357,6 +357,12 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the buttons below to reserve, get help, or configure restaurant settings (for owners only).\n\nUse the menu below to get started:\n\n⚙️ Settings is for restaurant owners to configure opening hours, table inventory, and venue settings — visible only to admin accounts.",
       { reply_markup: mainMenu() },
     );
+    const { year, month } = await getTzYearMonth();
+    const todayStr = await getTzTodayStr();
+    ctx.session.calYear = year;
+    ctx.session.calMonth = month;
+    const cal = buildCalendar(year, month, todayStr);
+    await ctx.reply(cal.text, { reply_markup: cal.keyboard });
   });
 
   bot.callbackQuery("menu:about", async (ctx) => {
