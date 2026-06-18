@@ -2,12 +2,21 @@ import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from ".
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
 import { generateSlots } from "./slots.js";
+import { buildCalendarWeek, todayStr } from "./calendar.js";
 
-// The per-chat session shape (ephemeral conversation state only). Extend as the
-// bot grows. Durable domain data must NOT live here — use the toolkit's
-// persistent storage (see AGENTS.md).
 export interface Session {
-  // example: step?: "awaiting_amount";
+  selectedDate?: string;
+  bookingStep?: string;
+}
+
+function formatDateDisplay(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const month = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  const year = d.getUTCFullYear();
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dow = dayNames[d.getUTCDay()];
+  return `${dow}, ${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}-${year}`;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -73,20 +82,104 @@ export function buildBot(token: string) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation\n/bookdate — Pick a date with the calendar",
+    );
+  });
+
+  bot.command("bookdate", async (ctx) => {
+    const start = todayStr();
+    const week = buildCalendarWeek(start);
+    ctx.session.selectedDate = undefined;
+    ctx.session.bookingStep = "awaiting_date";
+    await ctx.reply("Pick a date for your reservation:", {
+      reply_markup: week.keyboard,
+    });
+  });
+
+  bot.callbackQuery(/^cal:prev:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const startDate = ctx.match[1];
+    if (startDate < todayStr()) {
+      await ctx.reply("Cannot go before today.", {
+        reply_markup: buildCalendarWeek(todayStr()).keyboard,
+      });
+      return;
+    }
+    const week = buildCalendarWeek(startDate);
+    await ctx.editMessageText("Pick a date for your reservation:", {
+      reply_markup: week.keyboard,
+    });
+  });
+
+  bot.callbackQuery(/^cal:next:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const startDate = ctx.match[1];
+    const week = buildCalendarWeek(startDate);
+    await ctx.editMessageText("Pick a date for your reservation:", {
+      reply_markup: week.keyboard,
+    });
+  });
+
+  bot.callbackQuery(/^cal:pick:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const date = ctx.match[1];
+    ctx.session.selectedDate = date;
+    ctx.session.bookingStep = "awaiting_time";
+    const displayDate = formatDateDisplay(date);
+    await ctx.editMessageText(
+      `Selected date: ${displayDate}\n\nUse /slots to browse available times on this date, then /book to complete your reservation.`,
     );
   });
 
   bot.command("book", async (ctx) => {
     const args = ctx.msg.text.split(/\s+/).slice(1);
-    if (args.length < 3) {
+    if (args.length < 1) {
       await ctx.reply(
         "Usage: /book <date> <time> <party_size> [guest_name]\n\n" +
-          "Example: /book 2025-06-15 19:00 4 John",
+          "Example: /book 2025-06-15 19:00 4 John\n\n" +
+          "Tip: Use /bookdate to pick a date from the calendar first.",
       );
       return;
     }
-    const [date, time, partySizeStr, ...nameParts] = args;
+
+    let date: string;
+    let time: string;
+    let partySizeStr: string;
+    let nameParts: string[];
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(args[0])) {
+      date = args[0];
+      if (args.length < 3) {
+        await ctx.reply(
+          "Usage: /book <date> <time> <party_size> [guest_name]\n\n" +
+            "Example: /book 2025-06-15 19:00 4 John",
+        );
+        return;
+      }
+      time = args[1];
+      partySizeStr = args[2];
+      nameParts = args.slice(3);
+    } else if (ctx.session.selectedDate) {
+      date = ctx.session.selectedDate;
+      if (args.length < 2) {
+        await ctx.reply(
+          `Using selected date ${formatDateDisplay(date)}.\n\n` +
+            "Usage: /book <time> <party_size> [guest_name]\n" +
+            "Example: /book 19:00 4 John",
+        );
+        return;
+      }
+      time = args[0];
+      partySizeStr = args[1];
+      nameParts = args.slice(2);
+    } else {
+      await ctx.reply(
+        "Usage: /book <date> <time> <party_size> [guest_name]\n\n" +
+          "Example: /book 2025-06-15 19:00 4 John\n\n" +
+          "Tip: Use /bookdate to pick a date from the calendar first.",
+      );
+      return;
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       await ctx.reply("Invalid date format. Use YYYY-MM-DD (e.g. 2025-06-15).");
       return;

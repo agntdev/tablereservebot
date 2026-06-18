@@ -1,0 +1,79 @@
+[
+  {
+    "name": "/bookdate shows calendar with date selection prompt",
+    "steps": [
+      {
+        "send": { "text": "/bookdate" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Pick a date for your reservation:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cal:next advances the calendar week",
+    "steps": [
+      {
+        "send": { "text": "/bookdate" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:next:2099-12-31", "messageId": 1001 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Pick a date for your reservation:" }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cal:prev before today resets to current week",
+    "steps": [
+      {
+        "send": { "text": "/bookdate" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:prev:2020-01-01", "messageId": 1001 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "sendMessage",
+            "payload": { "text": "Cannot go before today." }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cal:pick selects a date and shows confirmation",
+    "steps": [
+      {
+        "send": { "text": "/bookdate" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2099-12-25", "messageId": 1001 },
+        "expect": [
+          { "method": "answerCallbackQuery" },
+          {
+            "method": "editMessageText",
+            "payload": { "text": "Selected date: Friday, 12-25-2099\n\nUse /slots to browse available times on this date, then /book to complete your reservation." }
+          }
+        ]
+      }
+    ]
+  }
+]
