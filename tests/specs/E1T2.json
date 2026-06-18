@@ -1,0 +1,145 @@
+[
+  {
+    "name": "/calendar shows current month with date grid and navigation",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "1", "callback_data": "cal:pick:2026-06-01" },
+                    { "text": "2", "callback_data": "cal:pick:2026-06-02" },
+                    { "text": "3", "callback_data": "cal:pick:2026-06-03" },
+                    { "text": "4", "callback_data": "cal:pick:2026-06-04" },
+                    { "text": "5", "callback_data": "cal:pick:2026-06-05" },
+                    { "text": "6", "callback_data": "cal:pick:2026-06-06" },
+                    { "text": "7", "callback_data": "cal:pick:2026-06-07" }
+                  ],
+                  [
+                    { "text": "8", "callback_data": "cal:pick:2026-06-08" },
+                    { "text": "9", "callback_data": "cal:pick:2026-06-09" },
+                    { "text": "10", "callback_data": "cal:pick:2026-06-10" },
+                    { "text": "11", "callback_data": "cal:pick:2026-06-11" },
+                    { "text": "12", "callback_data": "cal:pick:2026-06-12" },
+                    { "text": "13", "callback_data": "cal:pick:2026-06-13" },
+                    { "text": "14", "callback_data": "cal:pick:2026-06-14" }
+                  ],
+                  [
+                    { "text": "15", "callback_data": "cal:pick:2026-06-15" },
+                    { "text": "16", "callback_data": "cal:pick:2026-06-16" },
+                    { "text": "17", "callback_data": "cal:pick:2026-06-17" },
+                    { "text": "18", "callback_data": "cal:pick:2026-06-18" },
+                    { "text": "19", "callback_data": "cal:pick:2026-06-19" },
+                    { "text": "20", "callback_data": "cal:pick:2026-06-20" },
+                    { "text": "21", "callback_data": "cal:pick:2026-06-21" }
+                  ],
+                  [
+                    { "text": "22", "callback_data": "cal:pick:2026-06-22" },
+                    { "text": "23", "callback_data": "cal:pick:2026-06-23" },
+                    { "text": "24", "callback_data": "cal:pick:2026-06-24" },
+                    { "text": "25", "callback_data": "cal:pick:2026-06-25" },
+                    { "text": "26", "callback_data": "cal:pick:2026-06-26" },
+                    { "text": "27", "callback_data": "cal:pick:2026-06-27" },
+                    { "text": "28", "callback_data": "cal:pick:2026-06-28" }
+                  ],
+                  [
+                    { "text": "29", "callback_data": "cal:pick:2026-06-29" },
+                    { "text": "30", "callback_data": "cal:pick:2026-06-30" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" },
+                    { "text": " ", "callback_data": "cal:ignore" }
+                  ],
+                  [
+                    { "text": "◀ Prev", "callback_data": "cal:nav:2026:4" },
+                    { "text": "Next ▶", "callback_data": "cal:nav:2026:6" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "calendar navigation to next month shows July 2026",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:nav:2026:6" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "📅 July 2026\nSelect a date:"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "date pick confirms selection",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-15" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-15**."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cal:ignore callback is handled silently",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:ignore" },
+        "expect": []
+      }
+    ]
+  }
+]
