@@ -21,6 +21,7 @@ import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking, Settings } from "./storage/types.js";
 import { generateSlots, type Slot } from "./slots.js";
 import { checkAndSendReminders } from "./reminder.js";
+import { getTodayStr, getCurrentYearMonth } from "./tz.js";
 
 const STORAGE_UNAVAILABLE =
   "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.";
@@ -75,12 +76,27 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
   }
 
+  async function getTzTodayStr(): Promise<string> {
+    if (!storage) return new Date().toISOString().slice(0, 10);
+    const settings = await storage.getSettings();
+    return getTodayStr(settings?.timezone ?? "UTC");
+  }
+
+  async function getTzYearMonth(): Promise<{ year: number; month: number }> {
+    if (!storage) {
+      const now = new Date();
+      return { year: now.getFullYear(), month: now.getMonth() };
+    }
+    const settings = await storage.getSettings();
+    return getCurrentYearMonth(settings?.timezone ?? "UTC");
+  }
+
   async function showAvailableSlots(
     ctx: BotContext<Session>,
     dateStr: string,
     partySize: number,
   ): Promise<void> {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = await getTzTodayStr();
     if (dateStr < todayStr) {
       await ctx.reply("Date cannot be in the past. Please pick today or a future date with /calendar.");
       return;
@@ -408,12 +424,11 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
   });
 
   bot.command("calendar", async (ctx) => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const { year, month } = await getTzYearMonth();
+    const todayStr = await getTzTodayStr();
     ctx.session.calYear = year;
     ctx.session.calMonth = month;
-    const cal = buildCalendar(year, month);
+    const cal = buildCalendar(year, month, todayStr);
     await ctx.reply(cal.text, { reply_markup: cal.keyboard });
   });
 
@@ -423,14 +438,15 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const month = Number.parseInt(ctx.match[2], 10);
     ctx.session.calYear = year;
     ctx.session.calMonth = month;
-    const cal = buildCalendar(year, month);
+    const todayStr = await getTzTodayStr();
+    const cal = buildCalendar(year, month, todayStr);
     await ctx.editMessageText(cal.text, { reply_markup: cal.keyboard });
   });
 
   bot.callbackQuery(/^cal:pick:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const dateStr = ctx.match[1];
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = await getTzTodayStr();
     if (dateStr < todayStr) {
       await ctx.editMessageText(
         `Date **${dateStr}** is in the past. Please select today or a future date.`,
@@ -581,7 +597,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       await ctx.reply("Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15).");
       return;
     }
-    const nowDate = new Date().toISOString().slice(0, 10);
+    const nowDate = await getTzTodayStr();
     if (date < nowDate) {
       await ctx.reply("Date cannot be in the past. Please choose today or a future date.");
       return;
@@ -718,7 +734,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       );
       return;
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = await getTzTodayStr();
     const lines = slots.map((s) => `${s.start}–${s.end}`);
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
@@ -739,7 +755,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = await getTzTodayStr();
     const bookings = await storage.listBookingsByDate(today);
     const confirmed = bookings.filter((b) => b.status === "confirmed");
 
@@ -789,7 +805,8 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
 
     const bookings: Booking[] = [];
-    const today = new Date();
+    const todayStr = await getTzTodayStr();
+    const today = new Date(todayStr + "T00:00:00");
     for (let i = 0; i < days; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);

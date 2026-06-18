@@ -1,6 +1,7 @@
 import { allocateFirstFit } from "./allocate.js";
 import type { Storage } from "./storage/index.js";
 import { generateSlots, type Slot } from "./slots.js";
+import { getTodayStr } from "./tz.js";
 
 export interface AvailableSlotsResult {
   slots: Slot[];
@@ -12,20 +13,20 @@ export async function listBookableSlots(
   date: string,
   partySize: number,
 ): Promise<AvailableSlotsResult> {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  if (date < todayStr) {
-    return {
-      slots: [],
-      error: "Date cannot be in the past. Please choose today or a future date.",
-    };
-  }
-
   const settings = await storage.getSettings();
   if (!settings) {
     return {
       slots: [],
       error:
         "Opening hours are not configured yet. A venue admin must set them up first.",
+    };
+  }
+
+  const todayStr = getTodayStr(settings.timezone);
+  if (date < todayStr) {
+    return {
+      slots: [],
+      error: "Date cannot be in the past. Please choose today or a future date.",
     };
   }
 

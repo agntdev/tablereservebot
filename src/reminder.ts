@@ -1,4 +1,5 @@
 import type { Storage } from "./storage/index.js";
+import { formatDateStr } from "./tz.js";
 
 export interface ReminderApi {
   sendMessage(chat_id: number, text: string): Promise<unknown>;
@@ -45,11 +46,10 @@ export async function checkAndSendReminders(
   if (!settings) return { sent: 0, checked: 0 };
 
   const leadTimeMs = settings.reminder_lead_time * 60 * 1000;
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = formatDateStr(now, settings.timezone);
 
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowStr = formatDateStr(tomorrow, settings.timezone);
 
   const dates = [todayStr, tomorrowStr];
   let sent = 0;
