@@ -1,0 +1,57 @@
+[
+  {
+    "name": "/book rejects a booking when overlapping time slots consume all remaining capacity",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-15 18:00 15 LargeParty" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "text": "/book 2026-06-15 18:30 11 AnotherParty" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 11\nAvailable seats: 10"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book succeeds when overlapping time slots have enough remaining capacity",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-16 18:00 10 GroupA" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "text": "/book 2026-06-16 18:30 10 GroupB" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/reschedule with existing ref code accepts the command flow",
+    "steps": [
+      {
+        "send": { "text": "/reschedule N0TTHERE" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Booking with reference **N0TTHERE** was not found. Please check your reference and try again."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
