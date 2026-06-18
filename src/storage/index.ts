@@ -414,6 +414,34 @@ export class Storage {
     await this.redis.del(KEY.allocation(bookingId));
   }
 
+  // ─── No-show stats ────────────────────────────────────────────────────
+
+  async incrementNoShowCount(telegramId: number): Promise<void> {
+    const globalKey = "noshow:count:global";
+    const globalRaw = await this.redis.get(globalKey);
+    const globalCount = (parseInt(globalRaw ?? "0", 10) || 0) + 1;
+    await this.redis.set(globalKey, String(globalCount));
+
+    if (telegramId && telegramId > 0) {
+      const guestKey = `noshow:count:guest:${telegramId}`;
+      const guestRaw = await this.redis.get(guestKey);
+      const guestCount = (parseInt(guestRaw ?? "0", 10) || 0) + 1;
+      await this.redis.set(guestKey, String(guestCount));
+    }
+  }
+
+  async getNoShowCount(telegramId: number): Promise<number> {
+    if (!telegramId || telegramId <= 0) return 0;
+    const guestKey = `noshow:count:guest:${telegramId}`;
+    const raw = await this.redis.get(guestKey);
+    return parseInt(raw ?? "0", 10) || 0;
+  }
+
+  async getGlobalNoShowCount(): Promise<number> {
+    const raw = await this.redis.get("noshow:count:global");
+    return parseInt(raw ?? "0", 10) || 0;
+  }
+
   // ─── Reminders ────────────────────────────────────────────────────────
 
   async hasReminderSent(bookingId: string): Promise<boolean> {

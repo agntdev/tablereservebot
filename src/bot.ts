@@ -915,6 +915,10 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
 
     if (admin && booking.status === "confirmed") {
+      const noshowCount = await storage.getNoShowCount(booking.guest_telegram_id);
+      if (noshowCount > 0) {
+        msg += `No-show history: ${noshowCount} time(s)\n`;
+      }
       const buttons: InlineButton[][] = [
         [inlineButton("❌ Cancel Booking", `booking:cancel:${refCode}`)],
         [inlineButton("🚫 Mark No-Show", `booking:noshow:${refCode}`)],
@@ -969,12 +973,15 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
 
     await storage.updateBookingStatus(booking.id, "no_show");
+    await storage.incrementNoShowCount(booking.guest_telegram_id);
+    const noshowCount = await storage.getNoShowCount(booking.guest_telegram_id);
     await ctx.reply(
       `✅ Booking **${refCode}** has been marked as a no-show.\n\n` +
         `Guest: ${booking.guest_name ?? "N/A"}\n` +
         `Date: ${booking.date}\n` +
         `Time: ${booking.start_time}–${booking.end_time}\n` +
-        `Party: ${booking.party_size}`,
+        `Party: ${booking.party_size}\n` +
+        `No-show count: ${noshowCount}`,
       { reply_markup: mainMenu() },
     );
   });
@@ -1196,8 +1203,10 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
 
     await storage.updateBookingStatus(booking.id, "no_show");
+    await storage.incrementNoShowCount(booking.guest_telegram_id);
+    const noshowCount = await storage.getNoShowCount(booking.guest_telegram_id);
     await ctx.editMessageText(
-      `✅ Booking **${refCode}** has been marked as a no-show.`,
+      `✅ Booking **${refCode}** has been marked as a no-show.\n\nThis guest has ${noshowCount} no-show(s) on record.`,
       { reply_markup: mainMenu() },
     );
   });
