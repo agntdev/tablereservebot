@@ -1,0 +1,35 @@
+[
+  {
+    "name": "/today responds using timezone-aware date computation",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/calendar opens timezone-aware calendar",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/slots shows bookable slots for timezone-aware today",
+    "steps": [
+      {
+        "send": { "text": "/slots" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      }
+    ]
+  }
+]

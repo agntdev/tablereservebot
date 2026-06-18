@@ -141,15 +141,21 @@ describe("listBookableSlots", () => {
   });
 
   it("returns bookable slots when tables can seat the party", async () => {
-    const result = await listBookableSlots(storage, "2026-06-15", 4);
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    const dateStr = futureDate.toISOString().slice(0, 10);
+    const result = await listBookableSlots(storage, dateStr, 4);
     expect(result.error).toBeUndefined();
     expect(result.slots.length).toBeGreaterThan(0);
     expect(result.slots[0]?.start).toBe("18:00");
   });
 
   it("returns error when settings are missing", async () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    const dateStr = futureDate.toISOString().slice(0, 10);
     const empty = createStorage(fakeRedis());
-    const result = await listBookableSlots(empty, "2026-06-15", 2);
+    const result = await listBookableSlots(empty, dateStr, 2);
     expect(result.slots).toEqual([]);
     expect(result.error).toContain("Opening hours are not configured");
   });
