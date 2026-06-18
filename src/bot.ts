@@ -331,7 +331,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("start", async (ctx) => {
     await ctx.reply(
-      "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the menu below to get started:",
+      "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the menu below to get started:\n\nUse the buttons below to reserve, get help, or configure restaurant settings (for owners only)",
       { reply_markup: mainMenu() },
     );
   });
