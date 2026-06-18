@@ -1,0 +1,94 @@
+[
+  {
+    "name": "/cancel shows confirmation dialog with Yes/No buttons",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Cancel the current operation? This will discard any in-progress reservation or reschedule.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "✅ Yes", "callback_data": "cancel:yes" },
+                    { "text": "❌ No", "callback_data": "cancel:no" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cancel:yes confirms cancellation and shows main menu",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Cancel the current operation? This will discard any in-progress reservation or reschedule."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cancel:yes" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Operation cancelled. Use /start to begin again.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cancel:no dismisses cancellation",
+    "steps": [
+      {
+        "send": { "text": "/cancel" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Cancel the current operation? This will discard any in-progress reservation or reschedule."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cancel:no" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "⚠️ Cancellation was not applied. Continue where you left off.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

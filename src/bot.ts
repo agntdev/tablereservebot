@@ -4,6 +4,7 @@ import {
   InlineKeyboardMarkup,
   inlineButton,
   inlineKeyboard,
+  confirmKeyboard,
 } from "./toolkit/index.js";
 import { findNearbyAvailableDates, listBookableSlots } from "./availability.js";
 import { buildCalendar } from "./calendar.js";
@@ -351,10 +352,47 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     );
   });
 
+  bot.callbackQuery("cancel:yes", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    ctx.session.selectedDate = undefined;
+    ctx.session.partySize = undefined;
+    ctx.session.awaitingPartySize = undefined;
+    ctx.session.availableSlots = undefined;
+    ctx.session.slotPage = undefined;
+    ctx.session.selectedSlot = undefined;
+    ctx.session.collectingBookingGuestName = undefined;
+    ctx.session.collectingBookingGuestPhone = undefined;
+    ctx.session.bookingDate = undefined;
+    ctx.session.bookingTime = undefined;
+    ctx.session.bookingPartySize = undefined;
+    ctx.session.bookingGuestName = undefined;
+    ctx.session.bookingGuestPhone = undefined;
+    ctx.session.rescheduleBookingId = undefined;
+    ctx.session.rescheduleRefCode = undefined;
+    ctx.session.calYear = undefined;
+    ctx.session.calMonth = undefined;
+    await ctx.editMessageText("✅ Operation cancelled. Use /start to begin again.", {
+      reply_markup: mainMenu(),
+    });
+  });
+
+  bot.callbackQuery("cancel:no", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageText("⚠️ Cancellation was not applied. Continue where you left off.", {
+      reply_markup: mainMenu(),
+    });
+  });
+
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/reschedule — Reschedule an existing booking",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
     );
+  });
+
+  bot.command("cancel", async (ctx) => {
+    await ctx.reply("Cancel the current operation? This will discard any in-progress reservation or reschedule.", {
+      reply_markup: confirmKeyboard("cancel"),
+    });
   });
 
   bot.command("calendar", async (ctx) => {
