@@ -25,6 +25,9 @@ export function buildCalendar(
   const startDay = firstDay === 0 ? 6 : firstDay - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
   const rows: InlineButton[][] = [];
   let day = 1;
 
@@ -35,7 +38,11 @@ export function buildCalendar(
         row.push(inlineButton(" ", "cal:ignore"));
       } else {
         const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        row.push(inlineButton(String(day), `cal:pick:${dateStr}`));
+        if (dateStr < todayStr) {
+          row.push(inlineButton("·" + String(day), "cal:ignore"));
+        } else {
+          row.push(inlineButton(String(day), `cal:pick:${dateStr}`));
+        }
         day++;
       }
     }
