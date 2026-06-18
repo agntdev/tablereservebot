@@ -1,4 +1,11 @@
-import { createBot, InlineKeyboardMarkup, inlineButton, inlineKeyboard } from "./toolkit/index.js";
+import {
+  createBot,
+  type BotContext,
+  InlineKeyboardMarkup,
+  inlineButton,
+  inlineKeyboard,
+} from "./toolkit/index.js";
+import { listBookableSlots } from "./availability.js";
 import { buildCalendar } from "./calendar.js";
 import {
   buildPartySizeKeyboard,
@@ -6,9 +13,13 @@ import {
   formatPartySizePrompt,
   parsePartySizeInput,
 } from "./party.js";
+import { buildSlotKeyboard, formatSlotsPrompt } from "./slot-picker.js";
 import { Storage, defaultRedisStorageFactory } from "./storage/index.js";
 import type { Booking } from "./storage/types.js";
-import { generateSlots } from "./slots.js";
+import { generateSlots, type Slot } from "./slots.js";
+
+const STORAGE_UNAVAILABLE =
+  "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.";
 
 export interface Session {
   calYear?: number;
@@ -16,6 +27,9 @@ export interface Session {
   selectedDate?: string;
   partySize?: number;
   awaitingPartySize?: boolean;
+  availableSlots?: Slot[];
+  slotPage?: number;
+  selectedSlot?: string;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -44,6 +58,29 @@ export function buildBot(token: string) {
     } catch {
       storage = null;
     }
+  }
+
+  async function showAvailableSlots(
+    ctx: BotContext<Session>,
+    dateStr: string,
+    partySize: number,
+  ): Promise<void> {
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const { slots, error } = await listBookableSlots(storage, dateStr, partySize);
+    if (error) {
+      await ctx.reply(error);
+      return;
+    }
+
+    ctx.session.availableSlots = slots;
+    ctx.session.slotPage = 0;
+    await ctx.reply(formatSlotsPrompt(dateStr, partySize, slots.length), {
+      reply_markup: buildSlotKeyboard(slots, 0),
+    });
   }
 
   bot.command("start", async (ctx) => {
@@ -134,6 +171,7 @@ export function buildBot(token: string) {
     ctx.session.partySize = partySize;
     ctx.session.awaitingPartySize = false;
     await ctx.editMessageText(formatPartySizeConfirmation(dateStr, partySize));
+    await showAvailableSlots(ctx, dateStr, partySize);
   });
 
   bot.callbackQuery("party:type", async (ctx) => {
@@ -146,6 +184,43 @@ export function buildBot(token: string) {
 
     ctx.session.awaitingPartySize = true;
     await ctx.editMessageText("Type the number of guests (1–99):");
+  });
+
+  bot.callbackQuery(/^slot:page:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const dateStr = ctx.session.selectedDate;
+    const partySize = ctx.session.partySize;
+    const slots = ctx.session.availableSlots;
+    if (!dateStr || !partySize || !slots || slots.length === 0) {
+      await ctx.editMessageText("Please restart your reservation with /calendar.");
+      return;
+    }
+
+    const page = Number.parseInt(ctx.match[1], 10);
+    if (!Number.isFinite(page) || page < 0) {
+      return;
+    }
+
+    ctx.session.slotPage = page;
+    await ctx.editMessageText(formatSlotsPrompt(dateStr, partySize, slots.length), {
+      reply_markup: buildSlotKeyboard(slots, page),
+    });
+  });
+
+  bot.callbackQuery(/^slot:pick:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const startTime = ctx.match[1];
+    const dateStr = ctx.session.selectedDate;
+    const partySize = ctx.session.partySize;
+    if (!dateStr || !partySize) {
+      await ctx.editMessageText("Please restart your reservation with /calendar.");
+      return;
+    }
+
+    ctx.session.selectedSlot = startTime;
+    await ctx.editMessageText(
+      `✅ Date: ${dateStr}\nGuests: ${partySize}\nTime: ${startTime}`,
+    );
   });
 
   bot.callbackQuery("cal:ignore", async (ctx) => {
@@ -305,6 +380,7 @@ export function buildBot(token: string) {
       ctx.session.partySize = partySize;
       ctx.session.awaitingPartySize = false;
       await ctx.reply(formatPartySizeConfirmation(dateStr, partySize));
+      await showAvailableSlots(ctx, dateStr, partySize);
       return;
     }
 
