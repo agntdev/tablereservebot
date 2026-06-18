@@ -37,6 +37,8 @@ export interface Session {
   bookingPartySize?: number;
   bookingGuestName?: string;
   bookingGuestPhone?: string | null;
+  rescheduleBookingId?: string;
+  rescheduleRefCode?: string;
 }
 
 function mainMenu(): InlineKeyboardMarkup {
@@ -204,6 +206,116 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     ctx.session.collectingBookingGuestPhone = undefined;
   }
 
+  async function finalizeReschedule(
+    ctx: BotContext<Session>,
+    newStartTime: string,
+  ): Promise<void> {
+    const { rescheduleBookingId, selectedDate, rescheduleRefCode } =
+      ctx.session;
+    if (!rescheduleBookingId || !selectedDate || !storage) {
+      await ctx.reply(
+        "Reschedule session expired. Please try again with /reschedule <ref_code>.",
+      );
+      return;
+    }
+
+    const original = await storage.getBooking(rescheduleBookingId);
+    if (!original) {
+      await ctx.reply("Original booking not found.");
+      ctx.session.rescheduleBookingId = undefined;
+      ctx.session.rescheduleRefCode = undefined;
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+
+    const timeMins = (() => {
+      const [h, m] = newStartTime.split(":").map(Number);
+      return h * 60 + m;
+    })();
+    const endTimeMins = timeMins + settings.sitting_length;
+    const endHours = Math.floor(endTimeMins / 60) % 24;
+    const endMinutes = endTimeMins % 60;
+    const endTime =
+      String(endHours).padStart(2, "0") +
+      ":" +
+      String(endMinutes).padStart(2, "0");
+
+    const bookingId = `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const refCode = `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const now = new Date().toISOString();
+
+    const booking: Booking = {
+      id: bookingId,
+      ref_code: refCode,
+      guest_telegram_id: ctx.from?.id ?? 0,
+      guest_name: original.guest_name,
+      guest_phone: original.guest_phone,
+      date: selectedDate,
+      start_time: newStartTime,
+      end_time: endTime,
+      duration: settings.sitting_length,
+      party_size: original.party_size,
+      allocated_tables: [],
+      status: "confirmed",
+      created_at: now,
+      updated_at: now,
+    };
+
+    const result = await storage.createBookingAtomic(
+      booking,
+      selectedDate,
+      newStartTime,
+      endTime,
+      original.party_size,
+    );
+    if (!result.success) {
+      await ctx.reply(
+        `Cannot reschedule: ${result.reason}\n` +
+          `Needed seats: ${result.needed_seats}\n` +
+          `Available seats: ${result.available_seats}`,
+      );
+      ctx.session.rescheduleBookingId = undefined;
+      ctx.session.rescheduleRefCode = undefined;
+      ctx.session.selectedDate = undefined;
+      ctx.session.partySize = undefined;
+      ctx.session.availableSlots = undefined;
+      return;
+    }
+
+    const tableTypes = await storage.listTableTypes();
+    const lines = result.tables.map((a) => {
+      const tt = tableTypes.find((t) => t.id === a.table_type_id);
+      const label = tt ? tt.label : a.table_type_id;
+      return `${a.count}× ${label}`;
+    });
+
+    await ctx.editMessageText(
+      `✅ Rescheduled!\n\n` +
+        `Ref: ${refCode}\n` +
+        `Name: ${original.guest_name}\n` +
+        (original.guest_phone ? `Phone: ${original.guest_phone}\n` : "") +
+        `Date: ${selectedDate}\n` +
+        `Time: ${newStartTime}–${endTime}\n` +
+        `Party: ${original.party_size}\n` +
+        `Tables: ${lines.join(", ")}\n\n` +
+        `Original booking ${rescheduleRefCode ?? rescheduleBookingId} has been released.`,
+      { reply_markup: mainMenu() },
+    );
+
+    ctx.session.rescheduleBookingId = undefined;
+    ctx.session.rescheduleRefCode = undefined;
+    ctx.session.selectedDate = undefined;
+    ctx.session.partySize = undefined;
+    ctx.session.availableSlots = undefined;
+  }
+
   bot.command("start", async (ctx) => {
     await ctx.reply(
       "Welcome! I'm your reservation assistant.\n\nHow to make a reservation:\n1. Browse availability\n2. Select a date and time\n3. Confirm your details\n\nUse the menu below to get started:",
@@ -239,7 +351,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/reschedule — Reschedule an existing booking",
     );
   });
 
@@ -335,6 +447,11 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     const partySize = ctx.session.partySize;
     if (!dateStr || !partySize) {
       await ctx.editMessageText("Please restart your reservation with /calendar.");
+      return;
+    }
+
+    if (ctx.session.rescheduleBookingId) {
+      await finalizeReschedule(ctx, startTime);
       return;
     }
 
@@ -509,6 +626,52 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
     );
+  });
+
+  bot.command("reschedule", async (ctx) => {
+    const args = ctx.msg.text.split(/\s+/).slice(1);
+    if (args.length < 1) {
+      await ctx.reply(
+        "Usage: /reschedule <ref_code>\n\n" +
+          "Example: /reschedule REF-ABC123\n\n" +
+          "Provide your booking reference to release your current time slot and pick a new one.",
+      );
+      return;
+    }
+    const refCode = args[0].trim().toUpperCase();
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const booking = await storage.getBookingByRef(refCode);
+    if (!booking) {
+      await ctx.reply(
+        `Booking with reference **${refCode}** was not found. Please check your reference and try again.`,
+      );
+      return;
+    }
+
+    if (booking.status !== "confirmed") {
+      await ctx.reply(
+        `Booking ${refCode} cannot be rescheduled — it is **${booking.status}**. Only confirmed bookings can be rescheduled.`,
+      );
+      return;
+    }
+
+    await storage.updateBookingStatus(booking.id, "rescheduled");
+
+    ctx.session.rescheduleBookingId = booking.id;
+    ctx.session.rescheduleRefCode = refCode;
+    ctx.session.selectedDate = booking.date;
+    ctx.session.partySize = booking.party_size;
+
+    await ctx.reply(
+      `✅ Booking ${refCode} has been released.\n\nShowing available time slots for **${booking.date}** (${booking.party_size} guest${booking.party_size > 1 ? "s" : ""}):`,
+    );
+
+    await showAvailableSlots(ctx, booking.date, booking.party_size);
   });
 
   bot.callbackQuery("guest:skip_phone", async (ctx) => {

@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/reschedule with no arguments shows usage",
+    "steps": [
+      {
+        "send": { "text": "/reschedule" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Usage: /reschedule <ref_code>\n\nExample: /reschedule REF-ABC123\n\nProvide your booking reference to release your current time slot and pick a new one." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/reschedule reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/reschedule REF-ABC123" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Slot availability is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features." } }
+        ]
+      }
+    ]
+  }
+]
