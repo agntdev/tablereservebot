@@ -73,7 +73,7 @@ export function buildBot(token: string) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/slots — Browse available time slots\n/book — Make a reservation\n/today — Show today's capacity and bookings",
     );
   });
 
@@ -200,6 +200,68 @@ export function buildBot(token: string) {
     const lines = slots.map((s) => `${s.start}–${s.end}`);
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
+    );
+  });
+
+  bot.command("today", async (ctx) => {
+    if (!storage) {
+      await ctx.reply(
+        "Today's summary is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features.",
+      );
+      return;
+    }
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const bookings = await storage.listBookingsByDate(today);
+    const slots = generateSlots(settings);
+
+    const tableTypes = await storage.listTableTypes();
+    const totalSeats = tableTypes.reduce((sum, tt) => sum + tt.seat_count * tt.quantity, 0);
+
+    let bookingsText = "";
+    if (bookings.length === 0) {
+      bookingsText = "No bookings yet.";
+    } else {
+      bookingsText = bookings
+        .filter((b) => b.status === "confirmed" || b.status === "rescheduled")
+        .map((b) => {
+          const name = b.guest_name || `Guest #${b.guest_telegram_id}`;
+          const status = b.status === "rescheduled" ? " (rescheduled)" : "";
+          return `${b.start_time}–${b.end_time} — ${name} (${b.party_size}p)${status}`;
+        })
+        .join("\n");
+      if (!bookingsText) {
+        bookingsText = "No active bookings today.";
+      }
+    }
+
+    const bookedSeats = bookings
+      .filter((b) => b.status === "confirmed" || b.status === "rescheduled")
+      .reduce((sum, b) => sum + b.party_size, 0);
+
+    const remainingSeats = Math.max(0, totalSeats - bookedSeats);
+
+    const slotLines = slots.map((s) => `${s.start}–${s.end}`);
+    const slotsText = slots.length > 0
+      ? slotLines.join("\n")
+      : "No slots available within opening hours.";
+
+    await ctx.reply(
+      `📅 ${today}\n` +
+        `🕐 ${settings.open_time}–${settings.close_time} (${settings.timezone})\n\n` +
+        `*Bookings:*\n${bookingsText}\n\n` +
+        `*Capacity:*\n` +
+        `Total seats: ${totalSeats}\n` +
+        `Booked: ${bookedSeats}\n` +
+        `Remaining: ${remainingSeats}\n\n` +
+        `*Available slots:*\n${slotsText}`,
+      { parse_mode: "Markdown" },
     );
   });
 

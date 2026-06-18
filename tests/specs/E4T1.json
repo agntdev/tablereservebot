@@ -1,0 +1,13 @@
+[
+  {
+    "name": "/today reports unavailable when persistent storage is not configured",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Today's summary is unavailable — persistent storage is not configured. Set REDIS_URL to enable booking features." } }
+        ]
+      }
+    ]
+  }
+]
