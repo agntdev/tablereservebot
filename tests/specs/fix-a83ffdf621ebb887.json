@@ -1,0 +1,55 @@
+[
+  {
+    "name": "reschedule with changed party size finalizes with new party size",
+    "steps": [
+      {
+        "send": { "callback": "guest:reschedule:REF-TESTOWN" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Booking REF-TESTOWN has been released.\n\nShowing available time slots for **2026-06-20** (2 guests):"
+            }
+          },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-21" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-21**."
+            }
+          },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "party:4" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-21\nGuests: 4"
+            }
+          },
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          { "method": "editMessageText" }
+        ]
+      }
+    ]
+  }
+]

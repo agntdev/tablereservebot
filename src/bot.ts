@@ -287,6 +287,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
     const savedAllocatedTables = original.allocated_tables;
     const savedStatus = original.status;
+    const effectivePartySize = ctx.session.partySize ?? original.party_size;
     await storage.updateBooking(original.id, { status: "rescheduled", allocated_tables: [] });
 
     const booking: Booking = {
@@ -299,7 +300,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       start_time: newStartTime,
       end_time: endTime,
       duration: settings.sitting_length,
-      party_size: original.party_size,
+      party_size: effectivePartySize,
       allocated_tables: [],
       status: "confirmed",
       created_at: now,
@@ -311,7 +312,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       selectedDate,
       newStartTime,
       endTime,
-      original.party_size,
+      effectivePartySize,
     );
     if (!result.success) {
       await storage.updateBooking(original.id, { status: savedStatus, allocated_tables: savedAllocatedTables });
@@ -342,7 +343,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
         (original.guest_phone ? `Phone: ${original.guest_phone}\n` : "") +
         `Date: ${selectedDate}\n` +
         `Time: ${newStartTime}–${endTime}\n` +
-        `Party: ${original.party_size}\n` +
+        `Party: ${effectivePartySize}\n` +
         `Tables: ${lines.join(", ")}\n\n` +
         `Original booking ${rescheduleRefCode ?? rescheduleBookingId} has been released.`,
       { reply_markup: mainMenu() },
