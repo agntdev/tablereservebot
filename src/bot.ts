@@ -395,7 +395,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/upcoming — Show upcoming bookings for the next days\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
     );
   });
 
@@ -763,6 +763,54 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       )) {
         const name = b.guest_name ?? "Guest";
         msg += `• ${b.start_time}–${b.end_time}: ${name} (${b.party_size} pax) — ${b.ref_code}\n`;
+      }
+    }
+
+    await ctx.reply(msg, { reply_markup: mainMenu() });
+  });
+
+  bot.command("upcoming", async (ctx) => {
+    const args = ctx.msg.text.split(/\s+/).slice(1);
+    let days = 7;
+    if (args.length > 0) {
+      days = Number(args[0]);
+    }
+
+    if (!Number.isFinite(days) || days < 1 || days > 365) {
+      await ctx.reply("Days must be a positive number (1–365). Example: /upcoming 7");
+      return;
+    }
+
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const bookings: Booking[] = [];
+    const today = new Date();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const dayBookings = await storage.listBookingsByDate(dateStr);
+      bookings.push(...dayBookings);
+    }
+
+    const confirmed = bookings
+      .filter((b) => b.status === "confirmed")
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.start_time.localeCompare(b.start_time);
+      });
+
+    let msg = `Upcoming bookings (next ${days} day${days > 1 ? "s" : ""}):\n\n`;
+
+    if (confirmed.length === 0) {
+      msg += "No upcoming bookings. Use /book to make a reservation!";
+    } else {
+      for (const b of confirmed) {
+        const name = b.guest_name ?? "Guest";
+        msg += `• ${b.date} ${b.start_time}–${b.end_time}: ${name} (${b.party_size} pax) — ${b.ref_code}\n`;
       }
     }
 
