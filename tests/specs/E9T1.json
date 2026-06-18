@@ -1,0 +1,68 @@
+[
+  {
+    "name": "/book rejects an invalid month (13)",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-13-01 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book rejects an invalid day (Feb 30)",
+    "steps": [
+      {
+        "send": { "text": "/book 2025-02-30 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book rejects a date in the past",
+    "steps": [
+      {
+        "send": { "text": "/book 2020-01-01 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Date cannot be in the past. Please choose today or a future date." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book rejects year before 2000",
+    "steps": [
+      {
+        "send": { "text": "/book 1999-12-31 19:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid date. Use a real date in YYYY-MM-DD format (e.g. 2025-06-15)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book rejects out-of-range hours in time",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-07-15 25:00 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid time. Hours must be 00–23 and minutes must be 00–59 (e.g. 19:00)." } }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "/book rejects out-of-range minutes in time",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-07-15 19:60 4" },
+        "expect": [
+          { "method": "sendMessage", "payload": { "text": "Invalid time. Hours must be 00–23 and minutes must be 00–59 (e.g. 19:00)." } }
+        ]
+      }
+    ]
+  }
+]
