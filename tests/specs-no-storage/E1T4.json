@@ -1,6 +1,6 @@
 [
   {
-    "name": "calendar pick with party size 2 reports missing storage",
+    "name": "party size selection prompts for slots and reports missing storage",
     "steps": [
       {
         "send": { "text": "/calendar" },
@@ -14,29 +14,29 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-15" },
+        "send": { "callback": "cal:pick:2026-06-25" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "✅ You selected **2026-06-15**."
+              "text": "✅ You selected **2026-06-25**."
             }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Date: 2026-06-15\n\nHow many guests? Pick a quick option or type a number."
+              "text": "✅ Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number."
             }
           }
         ]
       },
       {
-        "send": { "callback": "party:2" },
+        "send": { "callback": "party:4" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "✅ Date: 2026-06-15\nGuests: 2"
+              "text": "✅ Date: 2026-06-25\nGuests: 4"
             }
           },
           {
@@ -50,7 +50,7 @@
     ]
   },
   {
-    "name": "calendar pick with typed party size 5 reports missing storage",
+    "name": "typed party size also prompts for slots without storage",
     "steps": [
       {
         "send": { "text": "/calendar" },
@@ -64,18 +64,18 @@
         ]
       },
       {
-        "send": { "callback": "cal:pick:2026-06-20" },
+        "send": { "callback": "cal:pick:2026-06-18" },
         "expect": [
           {
             "method": "editMessageText",
             "payload": {
-              "text": "✅ You selected **2026-06-20**."
+              "text": "✅ You selected **2026-06-18**."
             }
           },
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Date: 2026-06-20\n\nHow many guests? Pick a quick option or type a number."
+              "text": "✅ Date: 2026-06-18\n\nHow many guests? Pick a quick option or type a number."
             }
           }
         ]
@@ -92,12 +92,12 @@
         ]
       },
       {
-        "send": { "text": "5" },
+        "send": { "text": "6" },
         "expect": [
           {
             "method": "sendMessage",
             "payload": {
-              "text": "✅ Date: 2026-06-20\nGuests: 5"
+              "text": "✅ Date: 2026-06-18\nGuests: 6"
             }
           },
           {

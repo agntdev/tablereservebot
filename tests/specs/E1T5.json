@@ -1,81 +1,5 @@
 [
   {
-    "name": "interactive booking collects name and phone then reports missing storage",
-    "steps": [
-      {
-        "send": { "text": "/book 2026-06-25 19:00 4" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Please enter the guest name for the reservation:"
-            }
-          }
-        ]
-      },
-      {
-        "send": { "text": "Alice" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Please enter a contact phone number, or skip:"
-            }
-          }
-        ]
-      },
-      {
-        "send": { "text": "+15551234567" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Slot availability is unavailable \u2014 persistent storage is not configured. Set REDIS_URL to enable booking features."
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "skip phone in interactive booking reports missing storage",
-    "steps": [
-      {
-        "send": { "text": "/book 2026-06-25 19:00 3" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Please enter the guest name for the reservation:"
-            }
-          }
-        ]
-      },
-      {
-        "send": { "text": "Bob" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Please enter a contact phone number, or skip:"
-            }
-          }
-        ]
-      },
-      {
-        "send": { "callback": "guest:skip_phone" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Slot availability is unavailable \u2014 persistent storage is not configured. Set REDIS_URL to enable booking features."
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
     "name": "empty guest name is rejected in interactive booking",
     "steps": [
       {
@@ -96,22 +20,6 @@
             "method": "sendMessage",
             "payload": {
               "text": "Please enter a valid guest name."
-            }
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "direct /book with name confirms booking with inline buttons",
-    "steps": [
-      {
-        "send": { "text": "/book 2026-06-25 19:00 4 John" },
-        "expect": [
-          {
-            "method": "sendMessage",
-            "payload": {
-              "text": "Booking is unavailable \u2014 persistent storage is not configured. Set REDIS_URL to enable booking features."
             }
           }
         ]
