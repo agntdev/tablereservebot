@@ -745,6 +745,13 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
       return;
     }
 
+    if (booking.guest_telegram_id !== 0 && booking.guest_telegram_id !== ctx.from?.id) {
+      await ctx.reply(
+        `Booking **${refCode}** does not belong to you. Only the guest who made the booking can reschedule it.`,
+      );
+      return;
+    }
+
     if (booking.status !== "confirmed") {
       await ctx.reply(
         `Booking ${refCode} cannot be rescheduled — it is **${booking.status}**. Only confirmed bookings can be rescheduled.`,
