@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/today shows today's bookings and remaining capacity with main menu",
+    "steps": [
+      {
+        "send": { "text": "/today" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [{ "text": "📋 About", "callback_data": "menu:about" }],
+                  [{ "text": "🛟 Help", "callback_data": "menu:help" }],
+                  [{ "text": "⚙️ Settings", "callback_data": "menu:settings" }]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

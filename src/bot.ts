@@ -395,7 +395,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
 
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
+      "Available commands:\n/start — Start the bot\n/help — Show this help message\n/calendar — Pick a reservation date\n/slots — Browse available time slots\n/today — Show today's bookings and remaining capacity\n/book — Make a reservation\n/reschedule — Reschedule an existing booking\n/cancel — Cancel the current operation",
     );
   });
 
@@ -721,6 +721,52 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await ctx.reply(
       `Available slots for ${today}:\n\n${lines.join("\n")}`,
     );
+  });
+
+  bot.command("today", async (ctx) => {
+    if (!storage) {
+      await ctx.reply(STORAGE_UNAVAILABLE);
+      return;
+    }
+
+    const settings = await storage.getSettings();
+    if (!settings) {
+      await ctx.reply(
+        "Opening hours are not configured yet. A venue admin must set them up first.",
+      );
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const bookings = await storage.listBookingsByDate(today);
+    const confirmed = bookings.filter((b) => b.status === "confirmed");
+
+    const tableTypes = await storage.listTableTypes();
+    const totalCapacity = tableTypes.reduce(
+      (sum, tt) => sum + tt.seat_count * tt.quantity,
+      0,
+    );
+    const totalBooked = confirmed.reduce((sum, b) => sum + b.party_size, 0);
+    const remaining = Math.max(0, totalCapacity - totalBooked);
+
+    let msg = `📅 Today: ${today}\n\n`;
+    msg += `Capacity: ${totalCapacity} seats total\n`;
+    msg += `Booked: ${totalBooked} guests\n`;
+    msg += `Remaining: ${remaining} seats\n\n`;
+
+    if (confirmed.length === 0) {
+      msg += "No bookings for today yet.\n\nUse /book to make a reservation!";
+    } else {
+      msg += `Today's bookings (${confirmed.length}):\n\n`;
+      for (const b of confirmed.sort((a, b) =>
+        a.start_time.localeCompare(b.start_time),
+      )) {
+        const name = b.guest_name ?? "Guest";
+        msg += `• ${b.start_time}–${b.end_time}: ${name} (${b.party_size} pax) — ${b.ref_code}\n`;
+      }
+    }
+
+    await ctx.reply(msg, { reply_markup: mainMenu() });
   });
 
   bot.command("reschedule", async (ctx) => {
