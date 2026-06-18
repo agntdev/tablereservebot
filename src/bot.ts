@@ -670,6 +670,7 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     await ctx.reply(
       `✅ Booking confirmed!\n\n` +
         `Ref: ${refCode}\n` +
+        `Name: ${guestName}\n` +
         `Date: ${date}\n` +
         `Time: ${time}–${endTime}\n` +
         `Party: ${partySize}\n` +
