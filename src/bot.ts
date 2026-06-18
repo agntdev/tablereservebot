@@ -516,6 +516,13 @@ export function buildBot(token: string, injectedStorage?: Storage | null) {
     }
 
     if (nameParts.length === 0) {
+      ctx.session.awaitingPartySize = undefined;
+      ctx.session.collectingBookingGuestPhone = undefined;
+      ctx.session.selectedDate = undefined;
+      ctx.session.partySize = undefined;
+      ctx.session.availableSlots = undefined;
+      ctx.session.slotPage = undefined;
+      ctx.session.selectedSlot = undefined;
       ctx.session.bookingDate = date;
       ctx.session.bookingTime = time;
       ctx.session.bookingPartySize = partySize;
