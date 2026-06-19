@@ -1,0 +1,90 @@
+[
+  {
+    "name": "/book interactive mode clears prior calendar-flow session state so guest name is not intercepted by awaitingPartySize",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-25" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-25**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-25\n\nHow many guests? Pick a quick option or type a number.",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "2", "callback_data": "party:2" },
+                    { "text": "4", "callback_data": "party:4" }
+                  ],
+                  [
+                    { "text": "6", "callback_data": "party:6" },
+                    { "text": "8", "callback_data": "party:8" }
+                  ],
+                  [
+                    { "text": "Type a number", "callback_data": "party:type" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:type" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Type the number of guests (1–99):"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "/book 2026-06-25 19:00 4" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter the guest name for the reservation:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "Alice" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a contact phone number, or skip:",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    { "text": "Skip", "callback_data": "guest:skip_phone" }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
