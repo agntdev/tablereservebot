@@ -1,0 +1,177 @@
+[
+  {
+    "name": "calendar slot selection offers book button and completes booking",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "📅 June 2026\nSelect a date:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-20" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ You selected **2026-06-20**."
+            }
+          },
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\n\nHow many guests? Pick a quick option or type a number."
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:4" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\nGuests: 4"
+            }
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:09:00" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "✅ Date: 2026-06-20\nGuests: 4\nTime: 09:00",
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    {
+                      "text": "📋 Book this slot",
+                      "callback_data": "slot:book"
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:book" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Please enter the guest name for the reservation:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "Charlie" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a contact phone number, or skip:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "guest:skip_phone" },
+        "expect": [
+          {
+            "method": "sendMessage"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "slot book with empty guest name rejects after slot selection",
+    "steps": [
+      {
+        "send": { "text": "/calendar" },
+        "expect": [
+          {
+            "method": "sendMessage"
+          }
+        ]
+      },
+      {
+        "send": { "callback": "cal:pick:2026-06-21" },
+        "expect": [
+          {
+            "method": "editMessageText"
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      },
+      {
+        "send": { "callback": "party:2" },
+        "expect": [
+          {
+            "method": "editMessageText"
+          },
+          {
+            "method": "sendMessage"
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:pick:10:00" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "reply_markup": {
+                "inline_keyboard": [
+                  [
+                    {
+                      "text": "📋 Book this slot",
+                      "callback_data": "slot:book"
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "send": { "callback": "slot:book" },
+        "expect": [
+          {
+            "method": "editMessageText",
+            "payload": {
+              "text": "Please enter the guest name for the reservation:"
+            }
+          }
+        ]
+      },
+      {
+        "send": { "text": "" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Please enter a valid guest name."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
