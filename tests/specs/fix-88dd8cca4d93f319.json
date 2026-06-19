@@ -1,0 +1,24 @@
+[
+  {
+    "name": "/book rejects a booking when overlapping time slots consume all remaining capacity",
+    "steps": [
+      {
+        "send": { "text": "/book 2026-06-25 18:00 15 LargeParty" },
+        "expect": [
+          { "method": "sendMessage" }
+        ]
+      },
+      {
+        "send": { "text": "/book 2026-06-25 18:30 11 AnotherParty" },
+        "expect": [
+          {
+            "method": "sendMessage",
+            "payload": {
+              "text": "Cannot book: Not enough available seats for this time slot.\nNeeded seats: 11\nAvailable seats: 10"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
